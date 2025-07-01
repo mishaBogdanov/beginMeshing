@@ -4,7 +4,7 @@
 
 ![image](https://github.com/user-attachments/assets/c1923c9e-942b-43f0-b46a-39f693979e03)
 
-This is my first attempt at making a 2D mesher. You are able to receive results like above by passing the coordinates of nodes, followed by indicies of nodes to connect by edge in order. (examples can be found in models folder with .delouney extension)
+This is my first attempt at making a 2D mesher. You are able to receive results like above by passing the coordinates of nodes, followed by indicies of nodes to connect by edge in order. (examples can be found in models folder with .delaunay extension)
 
 ## using the mesher:
 
@@ -39,7 +39,7 @@ You just have to pass the path of the model data file, and 3 parameters which I 
   - The time complexity of this algorithm is O(numPts<sup>2</sup> * scaleModel / (jmpForFillPts<sup>2</sup> * pointDist)) since every point has to interact with every "jmpForFillPts" th point, and add a number of points that's related to the physical scale of the model.
  
 ## Create 2D Unconstrained:
-- Runs the delouney algorithm on all points.
+- Runs the delaunay algorithm on all points.
 - At this point the model looks something like:
 - <img src="https://github.com/user-attachments/assets/601c067a-7341-4a1a-8c8d-f862fe8950fa" width="300">
 - the actual edges are still not present in the model, however we can see a vague outline of the shape where the smaller triangles are.
