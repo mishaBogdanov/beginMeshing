@@ -15,7 +15,8 @@ You just have to pass the path of the model data file, and 3 parameters which I 
 
 ## heart of the application:
 
-![image](https://github.com/user-attachments/assets/74338259-f3ef-4bc8-bd9b-f913ad64a685)
+![image](https://github.com/user-attachments/assets/e0bef7d0-7ca4-4d27-bdb6-3e20b407f6dc)
+
 
 ## Populate points:
 
