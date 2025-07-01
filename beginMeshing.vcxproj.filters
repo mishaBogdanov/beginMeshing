@@ -57,13 +57,19 @@
     <ClCompile Include="src\core\MainEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\modeling\Delouney.cpp">
+    <ClCompile Include="src\modeling\Delaunay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\modeling\MyMath.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\testing\LineIntersectionTesting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modeling\TwoDMeshContainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -107,13 +113,19 @@
     <ClInclude Include="headers\core\MainEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="headers\modeling\Delouney.h">
+    <ClInclude Include="headers\modeling\Delaunay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="headers\modeling\MyMath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="headers\testing\LineIntersectionTesting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\core\Timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\modeling\TwoDMeshContainer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

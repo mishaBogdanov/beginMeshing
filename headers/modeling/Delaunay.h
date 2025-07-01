@@ -36,7 +36,7 @@ struct OrderedArrayEqual {
     }
 };
 
-class Delouney
+class Delaunay
 {
 public:
 	Mesh* Create2DUnconstrained     (std::string inPath);
@@ -71,8 +71,8 @@ private:
     };
 private:
     void AddExtraPoints(float inDist, float sclForFillPts, int jmpForFillPts);
-    void CreateSecondaryLinePoints(float inDist, const glm::vec2& inP1, const glm::vec2& inP2);
-    void CreateEdgeLinePoints(float inDist, const glm::vec2& inP1, const glm::vec2& inP2);
+    void CreateSecondaryLinePoints(float inDist, const glm::vec2 inP1, const glm::vec2 inP2);
+    void CreateEdgeLinePoints(float inDist, const glm::vec2 inP1, const glm::vec2 inP2);
     void DeleteOutsideTriangles();
     bool IsTriInsideConstraints(const std::array<size_t, 3>& inTri);
     void Create2DUnconstrained();
@@ -85,7 +85,7 @@ private:
     Mesh* CreateModel();
     std::vector<IntersectionData> GetTriContainingEdge(glm::vec2 p1, glm::vec2 p2);
     std::vector<SortedData>       GetSortedData(std::vector<IntersectionData> inData, glm::vec2 startingPoint);
-    void                          CutTriangles(std::vector<SortedData>& inData);
+    void                          CutTriangles(std::vector<SortedData> inData);
     IntersectionData IsLineIntersectingTri(glm::vec2 p1, glm::vec2 p2, const std::array<size_t, 3>& inTri);
     size_t AddPoint(float x, float y);
 private:

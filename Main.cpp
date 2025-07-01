@@ -7,7 +7,7 @@
 #include "headers/GlobalVariables.h"
 #include "headers/rendering/MainRenderer.h"
 #include "headers/core/MainEngine.h"
-#include "headers/modeling/Delouney.h"
+#include "headers/modeling/Delaunay.h"
 #include "headers/modeling/MyMath.h"
 #include "headers/testing/LineIntersectionTesting.h"
 
@@ -22,16 +22,23 @@ int main()
 
 	MainRenderer renderer;
 	MainEngine   mainEngine;
-	Camera       mainCamera(SCREEN_HEIGH, SCREEN_WIDTH, 1, glm::vec3(0.0f, 0.0f, 1.0f));
-	Mesh         testCube("./models/helicopter.object", 10, glm::vec3(0,0,0));
-	std::vector<std::vector<glm::vec3>> f = { {{0,0,0},{100,0,0},{0,100,0}} };
-	std::vector<std::vector<GLuint>> k = { {0,1,2} };
+	Camera       mainCamera(SCREEN_HEIGH, SCREEN_WIDTH, 1, glm::vec3(3.5f, 3.5f, 13.0f));
+	//Mesh         testCube("./models/helicopter.object", 10, glm::vec3(0,0,0));
+	//std::vector<std::vector<glm::vec3>> f = { {{0,0,0},{100,0,0},{0,100,0}} };
+	//std::vector<std::vector<GLuint>> k = { {0,1,2} };
 
-	Delouney del;
-	auto testMesh = del.Create2DConsSmoothedWEdge("./models/testButerfly.delouney", 0.5, 4, 4);
+
+	Delaunay del;
+	auto testMesh = del.Create2DConsSmoothedWEdge("./models/testButerfly.delaunay", 0.5, 4, 4);
+
+
+
 	//auto testMesh = del.Create2DConstrained("./models/testFish.delouney");
 	//Mesh         testMesh(f,k);
 	//renderer.AddMesh(&testCube);
+
+
+
 	renderer.AddMesh(testMesh);
 	mainCamera.setMatrixView();
 	for (auto& shader : renderer.GetShaders())

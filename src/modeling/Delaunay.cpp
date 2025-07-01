@@ -1,14 +1,15 @@
-#include "../../headers/modeling/Delouney.h"
+#include "../../headers/modeling/Delaunay.h"
 #include "../../headers/modeling/MyMath.h"
+#include "../../headers/core/Timer.h"
 Mesh*
-Delouney::Create2DUnconstrained(std::string inPath)
+Delaunay::Create2DUnconstrained(std::string inPath)
 {
 	PopulatePoints(std::move(inPath));
 	Create2DUnconstrained();
 	return CreateModel();
 }
 Mesh*
-Delouney::Create2DConstrained(std::string inPath)
+Delaunay::Create2DConstrained(std::string inPath)
 {
 	PopulatePoints(std::move(inPath));
 	Create2DUnconstrained();
@@ -16,7 +17,7 @@ Delouney::Create2DConstrained(std::string inPath)
 	return CreateModel();
 }
 Mesh*
-Delouney::Create2DConsWEdge(std::string inPath)
+Delaunay::Create2DConsWEdge(std::string inPath)
 {
 	PopulatePoints(std::move(inPath));
 	Create2DUnconstrained();
@@ -25,9 +26,10 @@ Delouney::Create2DConsWEdge(std::string inPath)
 	return CreateModel();
 }
 Mesh*
-Delouney::Create2DConsSmoothedWEdge(std::string inPath, float pointDist, float sclForFillPts, int jmpForFillPts)
+Delaunay::Create2DConsSmoothedWEdge(std::string inPath, float pointDist, float sclForFillPts, int jmpForFillPts)
 {
 	PopulatePoints(std::move(inPath));
+	Timer::startTime();
 	AddExtraPoints(pointDist, sclForFillPts, jmpForFillPts);
 	Create2DUnconstrained();
 	ForceConstraints();
@@ -35,7 +37,7 @@ Delouney::Create2DConsSmoothedWEdge(std::string inPath, float pointDist, float s
 	return CreateModel();
 }
 void 
-Delouney::Create2DUnconstrained()
+Delaunay::Create2DUnconstrained()
 {
 	CreateFirstTri();
 	for (size_t i = 0; i < mPoints.size() - 3; i++)
@@ -46,7 +48,7 @@ Delouney::Create2DUnconstrained()
 	DeleteExtraPointTri();
 }
 void
-Delouney::DeleteOutsideTriangles()
+Delaunay::DeleteOutsideTriangles()
 {
 	std::vector<std::array<size_t, 3>> toDelete;
 	for (auto& tri : mTris)
@@ -62,7 +64,7 @@ Delouney::DeleteOutsideTriangles()
 	}
 }
 bool
-Delouney::IsTriInsideConstraints(const std::array<size_t, 3>& inTri)
+Delaunay::IsTriInsideConstraints(const std::array<size_t, 3>& inTri)
 {
 	auto triCenter = (mPoints[inTri[0]] + mPoints[inTri[1]] + mPoints[inTri[2]]) / 3.0f;
 	auto end = triCenter;
@@ -82,7 +84,7 @@ Delouney::IsTriInsideConstraints(const std::array<size_t, 3>& inTri)
 	return (curIntersection % 2) == 1;
 }
 void
-Delouney::ForceConstraints()
+Delaunay::ForceConstraints()
 {
 
 	size_t numEdgeConstrain = mEdges.size() - 1;
@@ -92,11 +94,11 @@ Delouney::ForceConstraints()
 		auto p2 = mPoints[mEdges[i + 1]];
 		auto intersections = GetTriContainingEdge(p1, p2);
 		auto sortedData = GetSortedData(std::move(intersections), mPoints[mEdges[i]]);
-		CutTriangles(sortedData);
+		CutTriangles(std::move(sortedData));
 	}
 }
 void
-Delouney::PopulatePoints(std::string inPath)
+Delaunay::PopulatePoints(std::string inPath)
 {
 	std::ifstream rdStream(inPath);
 	std::string word;
@@ -137,7 +139,7 @@ Delouney::PopulatePoints(std::string inPath)
 	rdStream.close();
 }
 void
-Delouney::CreateFirstTri()
+Delaunay::CreateFirstTri()
 {
 	float avgX = (mMaxX + mMinX) / 2.0;
 	float avgY = (mMaxY + mMinY) / 2.0;
@@ -152,7 +154,7 @@ Delouney::CreateFirstTri()
 	mTris.insert({ mPoints.size() - 1, mPoints.size() - 2, mPoints.size() - 3 });
 }
 std::vector<std::array<size_t, 3>>
-Delouney::GetTriContainingPoint(size_t inPointIdx)
+Delaunay::GetTriContainingPoint(size_t inPointIdx)
 {
 	std::vector<std::array<size_t, 3>> outVal;
 
@@ -166,24 +168,23 @@ Delouney::GetTriContainingPoint(size_t inPointIdx)
 	return std::move(outVal);
 }
 void
-Delouney::AddExtraPoints(float inDist, float sclForFillPts, int jmpForFillPts)
+Delaunay::AddExtraPoints(float inDist, float sclForFillPts, int jmpForFillPts)
 {
 	for (size_t i = 0; i < mEdges.size() - 1; i++)
 	{
 		for (size_t j = i + 2; j < mEdges.size(); j += jmpForFillPts)
 		{
-			auto p1 = mPoints[mEdges[i]];
-			auto p2 = mPoints[mEdges[j]];
-			CreateSecondaryLinePoints(inDist * sclForFillPts, p1, p2);
+			CreateSecondaryLinePoints(inDist * sclForFillPts, mPoints[mEdges[i]], mPoints[mEdges[j]]);
 		}
-		auto p1 = mPoints[mEdges[i]];
-		auto p2 = mPoints[mEdges[i + 1]];
-		CreateEdgeLinePoints(inDist / 3, p1, p2);
+		CreateEdgeLinePoints(inDist / 3, mPoints[mEdges[i]], mPoints[mEdges[i + 1]]);
 	}
 }
 void
-Delouney::CreateSecondaryLinePoints(float inDist, const glm::vec2& inP1, const glm::vec2& inP2)
+Delaunay::CreateSecondaryLinePoints(float inDist, const glm::vec2 inP1, const glm::vec2 inP2)
 {
+	static std::vector<glm::vec2> p;
+	p.push_back(inP1);
+	p.push_back(inP2);
 	glm::vec2 normalizedDirection = glm::normalize(inP2 - inP1) * inDist;
 	glm::vec2 curPos = inP1 + normalizedDirection;
 	glm::vec2 p2ToP1 = inP1 - inP2;
@@ -201,8 +202,11 @@ Delouney::CreateSecondaryLinePoints(float inDist, const glm::vec2& inP1, const g
 	}
 }
 void
-Delouney::CreateEdgeLinePoints(float inDist, const glm::vec2& inP1, const glm::vec2& inP2)
+Delaunay::CreateEdgeLinePoints(float inDist, const glm::vec2 inP1, const glm::vec2 inP2)
 {
+	static std::vector<glm::vec2> p;
+	p.push_back(inP1);
+	p.push_back(inP2);
 	float inverseSlope;
 	bool  isVertical = false;
 	if (inP2.y - inP1.y != 0)
@@ -246,7 +250,7 @@ Delouney::CreateEdgeLinePoints(float inDist, const glm::vec2& inP1, const glm::v
 	}
 }
 void 
-Delouney::DeleteAndCreateTri(size_t inPtIdx, std::vector<std::array<size_t, 3>> inTriToDelete)
+Delaunay::DeleteAndCreateTri(size_t inPtIdx, std::vector<std::array<size_t, 3>> inTriToDelete)
 {
 	std::unordered_map<std::array<size_t, 2>, size_t, UnorderedArrayHash<size_t, 2>, UnorderedArrayEqual<size_t, 2>> visitedEdges;
 
@@ -268,7 +272,7 @@ Delouney::DeleteAndCreateTri(size_t inPtIdx, std::vector<std::array<size_t, 3>> 
 	}
 }
 void 
-Delouney::DeleteExtraPointTri()
+Delaunay::DeleteExtraPointTri()
 {
 	for (auto it = mTris.begin(); it != mTris.end();)
 	{
@@ -289,7 +293,7 @@ Delouney::DeleteExtraPointTri()
 	mPoints.pop_back();
 }
 Mesh*
-Delouney::CreateModel()
+Delaunay::CreateModel()
 {
 	std::vector<glm::vec3> vertices;
 	std::vector<GLuint> indices;
@@ -305,8 +309,8 @@ Delouney::CreateModel()
 	}
 	return new Mesh({ std::move(vertices) }, { std::move(indices) });
 }
-std::vector<Delouney::IntersectionData>
-Delouney::GetTriContainingEdge(glm::vec2 p1, glm::vec2 p2)
+std::vector<Delaunay::IntersectionData>
+Delaunay::GetTriContainingEdge(glm::vec2 p1, glm::vec2 p2)
 {
 	std::vector<IntersectionData> outVal;
 	for (auto& tri : mTris)
@@ -320,7 +324,7 @@ Delouney::GetTriContainingEdge(glm::vec2 p1, glm::vec2 p2)
 	return std::move(outVal);
 }
 void
-Delouney::CutTriangles(std::vector<SortedData>& inData)
+Delaunay::CutTriangles(std::vector<SortedData> inData)
 {
 	auto GetSharedTri = [](std::vector<std::array<size_t, 3>>& in1, std::vector<std::array<size_t, 3>>& in2)
 		{
@@ -402,15 +406,15 @@ Delouney::CutTriangles(std::vector<SortedData>& inData)
 		mTris.erase(sharedTri);
 	}
 }
-std::vector<Delouney::SortedData>
-Delouney::GetSortedData(std::vector<IntersectionData> inData, glm::vec2 startingPoint)
+std::vector<Delaunay::SortedData>
+Delaunay::GetSortedData(std::vector<IntersectionData> inData, glm::vec2 startingPoint)
 {
 	struct data
 	{
 		std::vector < std::array<size_t, 3>> tris;
 		std::vector <std::pair<size_t, size_t>> edge;
 	};
-	std::vector<Delouney::SortedData> outVal;
+	std::vector<Delaunay::SortedData> outVal;
 	std::unordered_map<size_t, data> pointsMapped;
 	for (auto& data : inData)
 	{
@@ -425,7 +429,7 @@ Delouney::GetSortedData(std::vector<IntersectionData> inData, glm::vec2 starting
 		}
 	}
 	for (auto& point : pointsMapped) { outVal.push_back({point.first, std::move(point.second.tris), std::move(point.second.edge)}); }
-	std::sort(outVal.begin(), outVal.end(), [this, &startingPoint](Delouney::SortedData& in1, Delouney::SortedData& in2) 
+	std::sort(outVal.begin(), outVal.end(), [this, &startingPoint](Delaunay::SortedData& in1, Delaunay::SortedData& in2) 
 		{
 			glm::vec2 dir1 = mPoints[in1.location] - startingPoint;
 			float     scl1 = dir1.x * dir1.x + dir1.y * dir1.y;
@@ -436,7 +440,7 @@ Delouney::GetSortedData(std::vector<IntersectionData> inData, glm::vec2 starting
 	return outVal;
 }
 size_t
-Delouney::AddPoint(float x, float y)
+Delaunay::AddPoint(float x, float y)
 {
 	auto itr = mPoint2Idx.find({ x,y });
 	if (itr == mPoint2Idx.end())
@@ -463,8 +467,8 @@ Delouney::AddPoint(float x, float y)
 	}
 	return itr->second;
 }
-Delouney::IntersectionData
-Delouney::IsLineIntersectingTri(glm::vec2 p1, glm::vec2 p2, const std::array<size_t, 3>& inTri)
+Delaunay::IntersectionData
+Delaunay::IsLineIntersectingTri(glm::vec2 p1, glm::vec2 p2, const std::array<size_t, 3>& inTri)
 {
 	IntersectionData outData;
 	outData.type1 = IntersectionData::TypeIntersection::noIntersection;

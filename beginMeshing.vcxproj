@@ -44,6 +44,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -157,7 +158,7 @@
   <ItemGroup>
     <ClCompile Include="src\testing\LineIntersectionTesting.cpp" />
     <ClCompile Include="src\modeling\MyMath.cpp" />
-    <ClCompile Include="src\modeling\Delouney.cpp" />
+    <ClCompile Include="src\modeling\Delaunay.cpp" />
     <ClCompile Include="src\core\MainEngine.cpp" />
     <ClCompile Include="src\rendering\MainRenderer.cpp" />
     <ClCompile Include="src\modeling\Edge.cpp" />
@@ -172,9 +173,11 @@
     <ClCompile Include="src\OpenGL\VAO.cpp" />
     <ClCompile Include="src\OpenGL\VBO.cpp" />
     <ClCompile Include="src\modeling\Triangle.cpp" />
+    <ClCompile Include="src\core\Timer.cpp" />
+    <ClCompile Include="src\modeling\TwoDMeshContainer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="headers\modeling\Delouney.h" />
+    <ClInclude Include="headers\modeling\Delaunay.h" />
     <ClInclude Include="headers\modeling\Edge.h" />
     <ClInclude Include="headers\modeling\Body.h" />
     <ClInclude Include="headers\controls\Camera.h" />
@@ -190,6 +193,8 @@
     <ClInclude Include="headers\core\MainEngine.h" />
     <ClInclude Include="headers\modeling\MyMath.h" />
     <ClInclude Include="headers\testing\LineIntersectionTesting.h" />
+    <ClInclude Include="headers\core\Timer.h" />
+    <ClInclude Include="headers\modeling\TwoDMeshContainer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="models\cube.object" />
