@@ -128,6 +128,9 @@
     <ClInclude Include="headers\modeling\TwoDMeshContainer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="headers\core\Definitions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\default.frag" />

@@ -25,11 +25,17 @@ Delaunay::Create2DConsWEdge(std::string inPath)
 	DeleteOutsideTriangles();
 	return CreateModel();
 }
+Mesh* 
+Delaunay::Create2DConsWEdgeNew(std::string inPath)
+{
+	mMshContainer.readFile(std::move(inPath));
+	Create2DUnconstrainedNew();
+	return nullptr;
+}
 Mesh*
 Delaunay::Create2DConsSmoothedWEdge(std::string inPath, float pointDist, float sclForFillPts, int jmpForFillPts)
 {
 	PopulatePoints(std::move(inPath));
-	Timer::startTime();
 	AddExtraPoints(pointDist, sclForFillPts, jmpForFillPts);
 	Create2DUnconstrained();
 	ForceConstraints();
@@ -46,6 +52,37 @@ Delaunay::Create2DUnconstrained()
 		DeleteAndCreateTri(i, trisToDelete);
 	}
 	DeleteExtraPointTri();
+}
+void
+Delaunay::Create2DUnconstrainedNew()
+{
+	CreateFirstTriNew();
+	while (mMshContainer.hasFloatPoints())
+	{
+		auto& tri = *mMshContainer.GetRemainingTri().begin();
+		auto  neighbors = mMshContainer.GetNeighborTri(tri);
+		for (auto& neighborTri : neighbors)
+		{
+
+		}
+	}
+}
+void
+Delaunay::CreateFirstTriNew()
+{
+	auto maxMin = mMshContainer.GetMaxMin();
+	double avgX = (maxMin[0] + maxMin[2]) / 2.0;
+	double avgY = (maxMin[1] + maxMin[3]) / 2.0;
+	double xDiff = mMaxX - mMinX;
+	double yDiff = mMaxY - mMinY;
+	MyVec2 topVertex   = MyVec2(avgX, avgY + 3 * xDiff);
+	MyVec2 bottomLeft  = MyVec2(avgX - 2 * xDiff, avgY - yDiff * 2);
+	MyVec2 bottomRight = MyVec2(avgX + 2 * xDiff, avgY - yDiff * 2);
+	mMshContainer.addPoint(topVertex);
+	mMshContainer.addPoint(bottomLeft);
+	mMshContainer.addPoint(bottomRight);
+	auto   nPoints = mMshContainer.getNumPoints();
+	mMshContainer.InitializeDelaunay({ nPoints - 3, nPoints - 2, nPoints - 1 });
 }
 void
 Delaunay::DeleteOutsideTriangles()

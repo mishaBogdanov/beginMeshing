@@ -195,6 +195,7 @@
     <ClInclude Include="headers\testing\LineIntersectionTesting.h" />
     <ClInclude Include="headers\core\Timer.h" />
     <ClInclude Include="headers\modeling\TwoDMeshContainer.h" />
+    <ClInclude Include="headers\core\Definitions.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="models\cube.object" />

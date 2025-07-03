@@ -10,6 +10,7 @@
 #include "headers/modeling/Delaunay.h"
 #include "headers/modeling/MyMath.h"
 #include "headers/testing/LineIntersectionTesting.h"
+#include "headers/modeling/TwoDMeshContainer.h"
 
 int main()
 {
@@ -19,6 +20,10 @@ int main()
 	//auto p = GetCenterTriangle(p4, p5, p6);
 	//LineIntersectionTesting t;
 	//t.runTest();
+	TwoDMeshContainer t;
+	t.addTriangle({1,2,3});
+	t.removeTriangle({ 1,2,3 });
+
 
 	MainRenderer renderer;
 	MainEngine   mainEngine;

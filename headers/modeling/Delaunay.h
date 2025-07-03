@@ -7,34 +7,8 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
-template<typename T, size_t N>
-struct UnorderedArrayHash {
-    std::size_t operator()(const std::array<T, N>& arr) const noexcept {
-        std::size_t h = 0;
-        for (auto x : arr) {
-            h ^= int64_t(x) * 9705493367;
-        }
-        return h;
-    }
-};
-template<typename T, size_t N>
-struct UnorderedArrayEqual {
-    bool operator()(const std::array<T, N>& a,
-        const std::array<T, N>& b) const noexcept {
-        auto sorted_a = a;
-        auto sorted_b = b;
-        std::sort(sorted_a.begin(), sorted_a.end());
-        std::sort(sorted_b.begin(), sorted_b.end());
-        return sorted_a == sorted_b;
-    }
-};
-template<typename T, size_t N>
-struct OrderedArrayEqual {
-    bool operator()(const std::array<T, N>& a,
-        const std::array<T, N>& b) const noexcept {
-        return a == b;
-    }
-};
+#include "../core/Definitions.h"
+#include "TwoDMeshContainer.h"
 
 class Delaunay
 {
@@ -42,6 +16,7 @@ public:
 	Mesh* Create2DUnconstrained     (std::string inPath);
     Mesh* Create2DConstrained       (std::string inPath);
     Mesh* Create2DConsWEdge         (std::string inPath);
+    Mesh* Create2DConsWEdgeNew      (std::string inPath);
     Mesh* Create2DConsSmoothedWEdge (std::string inPath, float pointDist = 0.3, float sclForFillPts = 2.5, int jmpForFillPts = 1);
 private:
     struct IntersectionData
@@ -76,6 +51,10 @@ private:
     void DeleteOutsideTriangles();
     bool IsTriInsideConstraints(const std::array<size_t, 3>& inTri);
     void Create2DUnconstrained();
+
+    void Create2DUnconstrainedNew();
+    void CreateFirstTriNew();
+
     void ForceConstraints();
     void PopulatePoints(std::string inPath);
     void CreateFirstTri();
@@ -93,6 +72,7 @@ private:
     std::vector<size_t>    mEdges;
 	std::unordered_set<std::array<size_t, 3>, UnorderedArrayHash<size_t, 3>, UnorderedArrayEqual<size_t, 3>> mTris;
     std::unordered_map<std::array<float, 2>, size_t, UnorderedArrayHash<float, 2>, OrderedArrayEqual<float, 2>> mPoint2Idx;
+    TwoDMeshContainer      mMshContainer;
 
     float mMaxX, mMaxY, mMinX, mMinY;
 };
