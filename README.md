@@ -8,13 +8,14 @@ This is my first attempt at making a 2D mesher. You are able to receive results 
 
 ## using the mesher:
 
-![image](https://github.com/user-attachments/assets/26d77cc9-b323-4fea-beaa-bbf86574ee49)
+![image](https://github.com/user-attachments/assets/38d96989-83a0-463b-8c8f-9b670dbf6689)
+
 
 You just have to pass the path of the model data file, and 3 parameters which I will explain later.
 
 ## heart of the application:
 
-![image](https://github.com/user-attachments/assets/74338259-f3ef-4bc8-bd9b-f913ad64a685)
+![image](https://github.com/user-attachments/assets/9500012f-dc92-4245-ad87-cf60aa4ad5cf)
 
 ## Populate points:
 
