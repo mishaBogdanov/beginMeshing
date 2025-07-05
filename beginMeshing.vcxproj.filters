@@ -143,8 +143,8 @@
     <None Include="shaders\test.geom" />
     <None Include="models\cube.object" />
     <None Include="models\helicopter.object" />
-    <None Include="models\points.delouney" />
-    <None Include="models\points2.delouney" />
+    <None Include="models\points.delaunay" />
+    <None Include="models\points2.delaunay" />
     <None Include="models\points3.delouney" />
     <None Include="models\test2.delouney" />
     <None Include="models\test3.delouney" />
@@ -154,5 +154,7 @@
     <None Include="models\testCar.delouney" />
     <None Include="models\testButerflyGPT.delouney" />
     <None Include="models\testButerfly.delouney" />
+    <None Include="models\testButerfly.delaunay" />
+    <None Include="models\points2C.delaunay" />
   </ItemGroup>
 </Project>

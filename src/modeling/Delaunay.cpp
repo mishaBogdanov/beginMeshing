@@ -28,9 +28,20 @@ Delaunay::Create2DConsWEdge(std::string inPath)
 Mesh* 
 Delaunay::Create2DConsWEdgeNew(std::string inPath)
 {
-	mMshContainer.readFile(std::move(inPath));
+	//mMshContainer.readFile(inPath);
+	PopulatePoints(inPath);
+	AddExtraPoints(0.12, 1, 1);
+	mMshContainer.populateFromGlm(mPoints, mEdges);
+	Timer::startTime();
+	//Create2DUnconstrained();
+	Timer::time("old_finished");
 	Create2DUnconstrainedNew();
-	return nullptr;
+	Timer::time("newFinished_finished");
+	Timer::stopTime();
+	std::cout << mPoints.size();
+	//CompareMshContainerWithOld();
+	//VerifyDelaunayNew();
+	return CreateModelNew();
 }
 Mesh*
 Delaunay::Create2DConsSmoothedWEdge(std::string inPath, float pointDist, float sclForFillPts, int jmpForFillPts)
@@ -38,8 +49,8 @@ Delaunay::Create2DConsSmoothedWEdge(std::string inPath, float pointDist, float s
 	PopulatePoints(std::move(inPath));
 	AddExtraPoints(pointDist, sclForFillPts, jmpForFillPts);
 	Create2DUnconstrained();
-	ForceConstraints();
-	DeleteOutsideTriangles();
+	//ForceConstraints();
+	//DeleteOutsideTriangles();
 	return CreateModel();
 }
 void 
@@ -57,32 +68,146 @@ void
 Delaunay::Create2DUnconstrainedNew()
 {
 	CreateFirstTriNew();
+	size_t iteration = 0;
 	while (mMshContainer.hasFloatPoints())
 	{
-		auto& tri = *mMshContainer.GetRemainingTri().begin();
-		auto  neighbors = mMshContainer.GetNeighborTri(tri);
-		for (auto& neighborTri : neighbors)
-		{
+		iteration++;
+		TwoDMeshContainer::TriVec triToDelete;
+		TwoDMeshContainer::TriVec triToCreate;
+		TwoDMeshContainer::TriHash triVisited;
+		TwoDMeshContainer::TriVec triToVisit;
+		TwoDMeshContainer::EdgeToSizeTable visitedEdge;
 
+		auto& tri = *mMshContainer.getRemainingTri().begin();
+		auto  ptIdx = *mMshContainer.getPointsInTri(tri).begin();
+		triToVisit.push_back(tri);
+		triVisited.insert(tri);
+		while (!triToVisit.empty())
+		{
+			auto curTri = triToVisit[triToVisit.size() - 1];
+			triToVisit.pop_back();
+			if (IsPointInCircumference(mMshContainer.getPoints()[ptIdx],
+				mMshContainer.getPoints()[curTri[0]],
+				mMshContainer.getPoints()[curTri[1]],
+				mMshContainer.getPoints()[curTri[2]]))
+			{
+				auto  neighbors = mMshContainer.getNeighborTri(curTri);
+				for (auto& tr : neighbors) 
+				{ 
+					if(!triVisited.contains(tr))
+					{ 
+						triToVisit.push_back(tr); 
+						triVisited.insert(tr);
+					}
+				}
+				triToDelete.push_back(curTri);
+				visitedEdge[{ curTri[0], curTri[1] }]++;
+				visitedEdge[{ curTri[1], curTri[2] }]++;
+				visitedEdge[{ curTri[0], curTri[2] }]++;
+			}
 		}
+
+
+
+
+
+
+		//auto  neighbors = mMshContainer.getNeighborTri(tri);
+		//triToDelete.push_back(tri);
+		//visitedEdge[{ tri[0], tri[1] }]++;
+		//visitedEdge[{ tri[1], tri[2] }]++;
+		//visitedEdge[{ tri[0], tri[2] }]++;
+		//for (auto& neighborTri : mMshContainer.getNeighborTri(tri))
+		//{
+		//	if (IsPointInCircumference(mMshContainer.getPoints()[ptIdx],
+		//		mMshContainer.getPoints()[neighborTri[0]],
+		//		mMshContainer.getPoints()[neighborTri[1]],
+		//		mMshContainer.getPoints()[neighborTri[2]]))
+		//	{
+		//		if (neighborTri != triToDelete[0])
+		//		{
+		//			triToDelete.push_back(neighborTri);
+		//			visitedEdge[{ neighborTri[0], neighborTri[1] }]++;
+		//			visitedEdge[{ neighborTri[1], neighborTri[2] }]++;
+		//			visitedEdge[{ neighborTri[0], neighborTri[2] }]++;
+		//			std::sort(triToDelete[triToDelete.size() - 1].begin(), triToDelete[triToDelete.size() - 1].end());
+		//		}
+		//	}
+		//}
+		for (auto& edge : visitedEdge)
+		{
+			if (edge.second < 2)
+			{
+				triToCreate.push_back({ edge.first[0], edge.first[1], ptIdx });
+				std::sort(triToCreate[triToCreate.size() - 1].begin(), triToCreate[triToCreate.size() - 1].end());
+			}
+		}
+		mMshContainer.removeAndReplaceTri(triToDelete, triToCreate, ptIdx);
 	}
+	DeleteExtraPointTriNew();
 }
 void
 Delaunay::CreateFirstTriNew()
 {
-	auto maxMin = mMshContainer.GetMaxMin();
+	auto maxMin = mMshContainer.getMaxMin();
 	double avgX = (maxMin[0] + maxMin[2]) / 2.0;
 	double avgY = (maxMin[1] + maxMin[3]) / 2.0;
-	double xDiff = mMaxX - mMinX;
-	double yDiff = mMaxY - mMinY;
-	MyVec2 topVertex   = MyVec2(avgX, avgY + 3 * xDiff);
+	double xDiff = maxMin[2] - maxMin[0];
+	double yDiff = maxMin[3] - maxMin[1];
+	MyVec2 topVertex   = MyVec2(avgX, avgY + 3 * yDiff);
 	MyVec2 bottomLeft  = MyVec2(avgX - 2 * xDiff, avgY - yDiff * 2);
 	MyVec2 bottomRight = MyVec2(avgX + 2 * xDiff, avgY - yDiff * 2);
 	mMshContainer.addPoint(topVertex);
 	mMshContainer.addPoint(bottomLeft);
 	mMshContainer.addPoint(bottomRight);
 	auto   nPoints = mMshContainer.getNumPoints();
-	mMshContainer.InitializeDelaunay({ nPoints - 3, nPoints - 2, nPoints - 1 });
+	mMshContainer.initializeDelaunay({ nPoints - 3, nPoints - 2, nPoints - 1 });
+}
+void
+Delaunay::DeleteExtraPointTriNew()
+{
+	TwoDMeshContainer::TriVec toDelete;
+	auto nPoints = mMshContainer.getNumPoints();
+	for (auto& tri : mMshContainer.getTriangles())
+	{
+		if (tri[0] >= nPoints - 3 || tri[1] >= nPoints - 3 || tri[2] >= nPoints - 3)
+		{
+			toDelete.push_back(tri);
+		}
+	}
+	for (auto& tri : toDelete) { mMshContainer.removeTriangle(tri); }
+	for (int i = 0; i < 3; i++) { mMshContainer.removeLastPoint(); }
+}
+void
+Delaunay::VerifyDelaunayNew()
+{
+	for (auto& tri : mMshContainer.getTriangles())
+	{
+		for (size_t ndIdx = 0; ndIdx < mMshContainer.getPoints().size(); ndIdx++)
+		{
+			if (mMshContainer.getTriFromPts(ndIdx).size() == 0) { continue; }
+			if (IsPointInCircumference(mMshContainer.getPoints()[ndIdx], mMshContainer.getPoints()[tri[0]], mMshContainer.getPoints()[tri[1]], mMshContainer.getPoints()[tri[2]]))
+			{
+				std::cout << "error detected\n";
+			}
+		}
+	}
+}
+void 
+Delaunay::CompareMshContainerWithOld()
+{
+	if (mMshContainer.getTriangles().size() != mTris.size())
+	{
+		throw std::logic_error("tri nums don't equal");
+	}
+	for (auto& tri : mMshContainer.getTriangles())
+	{
+		if (mTris.count(tri) != 1)
+		{
+			throw std::logic_error("found non existant tri");
+			std::cout << "here";
+		}
+	}
 }
 void
 Delaunay::DeleteOutsideTriangles()
@@ -197,7 +322,7 @@ Delaunay::GetTriContainingPoint(size_t inPointIdx)
 
 	for (auto& tri : mTris)
 	{
-		if (IsPointIntCircumference(mPoints[inPointIdx], mPoints[tri[0]], mPoints[tri[1]], mPoints[tri[2]]))
+		if (IsPointInCircumference(mPoints[inPointIdx], mPoints[tri[0]], mPoints[tri[1]], mPoints[tri[2]]))
 		{
 			outVal.push_back({tri});
 		}
@@ -228,11 +353,13 @@ Delaunay::CreateSecondaryLinePoints(float inDist, const glm::vec2 inP1, const gl
 	int i = 0;
 	while (glm::dot(curPos - inP2, p2ToP1) > 0)
 	{
+#if SAFE_MODE
 		i++;
 		if (i > 60)
 		{
 			std::cout << "a lot of points added";
 		}
+#endif
 		auto newPoint1 = curPos;
 		AddPoint(newPoint1.x, newPoint1.y);
 		curPos += normalizedDirection;
@@ -339,6 +466,23 @@ Delaunay::CreateModel()
 		vertices.push_back({ point.x, point.y, 0 });
 	}
 	for (auto& tri : mTris)
+	{
+		indices.push_back(tri[0]);
+		indices.push_back(tri[1]);
+		indices.push_back(tri[2]);
+	}
+	return new Mesh({ std::move(vertices) }, { std::move(indices) });
+}
+Mesh*
+Delaunay::CreateModelNew()
+{
+	std::vector<glm::vec3> vertices;
+	std::vector<GLuint> indices;
+	for (auto& point : mMshContainer.getPoints())
+	{
+		vertices.push_back({ point.x, point.y, 0 });
+	}
+	for (auto& tri : mMshContainer.getTriangles())
 	{
 		indices.push_back(tri[0]);
 		indices.push_back(tri[1]);

@@ -52,8 +52,15 @@ private:
     bool IsTriInsideConstraints(const std::array<size_t, 3>& inTri);
     void Create2DUnconstrained();
 
+
     void Create2DUnconstrainedNew();
     void CreateFirstTriNew();
+    void DeleteExtraPointTriNew();
+    Mesh* CreateModelNew();
+    void VerifyDelaunayNew();
+
+
+    void CompareMshContainerWithOld();
 
     void ForceConstraints();
     void PopulatePoints(std::string inPath);

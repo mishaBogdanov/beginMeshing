@@ -1,10 +1,9 @@
 #include "../../headers/modeling/TwoDMeshContainer.h"
 #include <iostream>
 #include <fstream>
-#define USE_EDGES 1
-#define SAFE_MODE 1
+
 void
-TwoDMeshContainer::addTriangle(std::array<size_t, 3> inArray)
+TwoDMeshContainer::addTriangle            ( std::array<size_t, 3>           inArray)
 {
 #if SAFE_MODE == 1
 	std::array<size_t, 3> sortedArr = inArray;
@@ -22,7 +21,17 @@ TwoDMeshContainer::addTriangle(std::array<size_t, 3> inArray)
 #endif
 }
 void
-TwoDMeshContainer::removeTriangle(std::array<size_t, 3> inArray)  // NOTE: does not modify mTriToContainedPoint
+TwoDMeshContainer::populateFromGlm        ( std::vector<glm::vec2>&         inPts,
+                                            std::vector<size_t>&            inEdges)
+{
+	for (auto& pt : inPts)
+	{
+		addPoint(pt.x, pt.y);
+	}
+	mEdges = inEdges;
+}
+void
+TwoDMeshContainer::removeTriangle         ( std::array<size_t, 3>           inArray)  // NOTE: does not modify mTriToContainedPoint
 {
 #if SAFE_MODE == 1
 	std::array<size_t, 3> sortedArr = inArray;
@@ -45,9 +54,10 @@ TwoDMeshContainer::removeTriangle(std::array<size_t, 3> inArray)  // NOTE: does 
 	mEdgeToTri[{inArray[1], inArray[2]}].erase(&*itr);
 	mEdgeToTri[{inArray[0], inArray[2]}].erase(&*itr);
 #endif
+	mTriangles.erase(itr);
 }
 void
-TwoDMeshContainer::readFile(std::string inLocation)
+TwoDMeshContainer::readFile               ( std::string                     inLocation)
 {
 	std::ifstream rdStream(inLocation);
 	std::string word;
@@ -88,7 +98,8 @@ TwoDMeshContainer::readFile(std::string inLocation)
 	rdStream.close();
 }
 size_t
-TwoDMeshContainer::addPoint(double x, double y)
+TwoDMeshContainer::addPoint               ( double                          x,
+					                        double                          y)
 {
 	auto itr = mPointToIdx.find({x,y});
 	if (itr == mPointToIdx.end())
@@ -116,7 +127,7 @@ TwoDMeshContainer::addPoint(double x, double y)
 	return itr->second;
 }
 size_t
-TwoDMeshContainer::addPoint(MyVec2& inVec)
+TwoDMeshContainer::addPoint               ( MyVec2&                         inVec)
 {
 	auto itr = mPointToIdx.find(inVec);
 	if (itr == mPointToIdx.end())
@@ -144,7 +155,7 @@ TwoDMeshContainer::addPoint(MyVec2& inVec)
 	return itr->second;
 }
 void
-TwoDMeshContainer::InitializeDelaunay(std::array<size_t, 3> inArray)
+TwoDMeshContainer::initializeDelaunay     ( std::array<size_t, 3>           inArray)
 {
 #if SAFE_MODE == 1
 	std::array<size_t, 3> sortedArr = inArray;
@@ -153,6 +164,7 @@ TwoDMeshContainer::InitializeDelaunay(std::array<size_t, 3> inArray)
 #endif
 
 	addTriangle(inArray);
+	mTrianglesWithPoints.insert(inArray);
 	auto itr = mTriToContainedPoint.emplace( inArray, std::unordered_set<size_t>{} );
 	for (size_t i = 0; i < mPoints.size() - 3; i++)
 	{
@@ -160,8 +172,13 @@ TwoDMeshContainer::InitializeDelaunay(std::array<size_t, 3> inArray)
 	}
 }
 std::vector<std::array<size_t, 3>>
-TwoDMeshContainer::GetNeighborTri(std::array<size_t, 3> inArray)
+TwoDMeshContainer::getNeighborTri         ( std::array<size_t, 3>           inArray)
 {
+#if SAFE_MODE == 1
+	std::array<size_t, 3> sortedArr = inArray;
+	std::sort(sortedArr.begin(), sortedArr.end());
+	if (sortedArr != inArray) { throw std::logic_error("passed unsorted array"); }
+#endif
 	std::vector<std::array<size_t, 3>> outVal;
 	std::unordered_set<std::array<size_t, 3>, OrderedArrayHash<size_t, 3>, OrderedArrayEqual<size_t, 3>> triCollected;
 	for (int i = 0; i < 3; i++)
@@ -172,11 +189,14 @@ TwoDMeshContainer::GetNeighborTri(std::array<size_t, 3> inArray)
 			triCollected.insert(*triPtr);
 		}
 	}
+	triCollected.erase(inArray);
 	for (auto& tri : triCollected) { outVal.push_back(tri); }
 	return std::move(outVal);
 }
 void
-TwoDMeshContainer::RemoveAndReplaceTri(TriVec toRemove, TriVec toInsert, size_t toNotInclude)
+TwoDMeshContainer::removeAndReplaceTri    ( TriVec                          toRemove, 
+	                                        TriVec                          toInsert,
+	                                        size_t                          toNotInclude)
 {
 #if SAFE_MODE == 1
 	for (auto& tri : toRemove)
@@ -199,25 +219,28 @@ TwoDMeshContainer::RemoveAndReplaceTri(TriVec toRemove, TriVec toInsert, size_t 
 			for (auto& tri : toInsert)
 			{
 				if (ptIdx == toNotInclude) { continue; }
-				if (IsPointInTriangle(mPoints[ptIdx], mPoints[tri[1]], mPoints[tri[2]], mPoints[tri[3]]))
+				if (IsPointInTriangle(mPoints[ptIdx], mPoints[tri[0]], mPoints[tri[1]], mPoints[tri[2]]))
 				{
 					mTriToContainedPoint[tri].insert(ptIdx);
 					mTrianglesWithPoints.insert(tri);
-#if SAFE_MODE == 1
-					mTriToContainedPoint[triRmv].erase(ptIdx);
-#endif
 					continue;
 				}
 			}
 		}
-#if SAFE_MODE == 1
-		if (mTriToContainedPoint[triRmv].size() != 0) { throw std::logic_error("still pt left in tri"); }
-#endif
 		mTriToContainedPoint.erase(triRmv);
 		mTrianglesWithPoints.erase(triRmv);
 	}
+	for (auto& tri : toRemove) { removeTriangle(std::move(tri)); }
 	for (auto& tri : toInsert) { addTriangle(std::move(tri)); }
 }
+void
+TwoDMeshContainer::removeLastPoint        ( )
+{
+	mPointToIdx.erase(mPoints[mPoints.size() - 1]);
+	mPointToTri.erase(mPoints.size() - 1);
+	mPoints.pop_back();
+}
+
 
 
 

@@ -2,7 +2,7 @@
 #include <cmath>
 #include <stdexcept>
 
-std::pair<bool, glm::vec2> GetCenterTriangle(glm::vec2& p1, glm::vec2& p2, glm::vec2& p3)
+std::pair<bool, glm::vec2> GetCenterTriangle(const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& p3)
 {
 	glm::vec3 p1ToP2 = glm::vec3(p2.x - p1.x, p2.y - p1.y, 0);
 	glm::vec3 p2ToP3 = glm::vec3(p3.x - p2.x, p3.y - p2.y, 0);
@@ -15,16 +15,20 @@ std::pair<bool, glm::vec2> GetCenterTriangle(glm::vec2& p1, glm::vec2& p2, glm::
 	return { true, { (-(p1.y - p2.y) * u + (p1.y - p3.y) * t) / (2 * j),
 			 ((p1.x - p2.x)* u - (p1.x - p3.x) * t) / (2 * j)} };
 }
-bool      IsPointIntCircumference(glm::vec2& pt, glm::vec2& p1, glm::vec2& p2, glm::vec2& p3)
+std::pair<bool, MyVec2>    GetCenterTriangle(const MyVec2& p1, const MyVec2& p2, const MyVec2& p3)
 {
-	auto center = GetCenterTriangle(p1, p2, p3);
-	if (!center.first) { return false; }
-	glm::vec2 circ = p1 - center.second;
-	glm::vec2 dist = pt - center.second;
-	float radSqr = glm::dot(circ, circ);
-	float distSqr = glm::dot(dist, dist);
-	return radSqr > distSqr;
+	glm::vec3 p1ToP2 = glm::vec3(p2.x - p1.x, p2.y - p1.y, 0);
+	glm::vec3 p2ToP3 = glm::vec3(p3.x - p2.x, p3.y - p2.y, 0);
+	glm::vec3 cross = glm::cross(p1ToP2, p2ToP3);
+	if (cross.z == 0) { return { false, {0,0} }; }
+
+	auto t = p1.x * p1.x + p1.y * p1.y - p2.x * p2.x - p2.y * p2.y;
+	auto u = p1.x * p1.x + p1.y * p1.y - p3.x * p3.x - p3.y * p3.y;
+	auto j = (p1.x - p2.x) * (p1.y - p3.y) - (p1.x - p3.x) * (p1.y - p2.y);
+	return { true, { (-(p1.y - p2.y) * u + (p1.y - p3.y) * t) / (2 * j),
+			 ((p1.x - p2.x) * u - (p1.x - p3.x) * t) / (2 * j)} };
 }
+
 LineIntersectionData GetLineLineIntersection(glm::vec2 line1p1, glm::vec2 line1p2, glm::vec2 line2p1, glm::vec2 line2p2)
 {
 	glm::vec2 overlapPoint;
