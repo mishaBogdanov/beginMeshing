@@ -2,6 +2,8 @@
 #include "glm/glm.hpp"
 #include <utility>
 #include <array>
+#include <stdexcept>
+#include <vector>
 class MyVec2
 {
 public:
@@ -38,6 +40,11 @@ public:
 		MyVec2 result(lhs);
 		result -= rhs;
 		return result;
+	}
+
+	bool operator==(const MyVec2& rhs) const
+	{
+		return (rhs.x == x) && (rhs.y == y);
 	}
 };
 class MyVec3
@@ -80,10 +87,12 @@ public:
 		result -= rhs;
 		return result;
 	}
+
+	bool operator==(const MyVec3& rhs) const
+	{
+		return (rhs.x == x) && (rhs.y == y) && (rhs.z == z);
+	}
 };
-std::pair<bool, glm::vec2> GetCenterTriangle(const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& p3);
-std::pair<bool, MyVec2>    GetCenterTriangle(const MyVec2& p1, const MyVec2& p2, const MyVec2& p3);
-bool                       IsPointInCircumference(const auto& pt, const auto& p1, const auto& p2, const auto& p3);
 struct LineIntersectionData
 {
 	enum type
@@ -99,29 +108,72 @@ struct LineIntersectionData
 	type intersectionType;
 	glm::vec2 p1, p2;
 };
-
-LineIntersectionData GetLineLineIntersection(glm::vec2 line1p1, glm::vec2 line1p2, glm::vec2 line2p1, glm::vec2 line2p2);
-bool                 IsPointOnLine          (glm::vec2& lineP1, glm::vec2& lineP2, glm::vec2 p);
-bool                 IsPointInTriangle      (auto& pt, auto& triP1, auto& triP2, auto& triP3);
-double               CrossSign              (auto& p1, auto& p2, auto& p3);
 namespace glm
 {
 	inline double dot(const MyVec2& in1, const MyVec2& in2)
 	{
 		return in1.x * in2.x + in1.y * in2.y;
 	}
+	inline double dot(const MyVec3& in1, const MyVec3& in2)
+	{
+		return in1.x * in2.x + in1.y * in2.y + in1.z * in2.z;
+	}
 	inline MyVec3 cross(const MyVec3& in1, const MyVec3& in2)
 	{
-		return {in1.y*in2.z - in1.z*in2.y, in2.x*in1.z - in1.x*in2.z, in1.x * in2.y - in1.y*in2.x};
+		return { in1.y * in2.z - in1.z * in2.y, in2.x * in1.z - in1.x * in2.z, in1.x * in2.y - in1.y * in2.x };
 	}
 }
 
 
+std::pair<bool, glm::vec2> GetCenterTriangle          (const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& p3);
+std::pair<bool, MyVec2>    GetCenterTriangle          (const MyVec2& p1, const MyVec2& p2, const MyVec2& p3);
+bool                       IsPointInCircumference     (const auto& pt, const auto& p1, const auto& p2, const auto& p3);
+bool                       IsPolygonConvex            (std::vector<MyVec2> inPoints);
+LineIntersectionData       GetLineLineIntersection    (glm::vec2 line1p1, glm::vec2 line1p2, glm::vec2 line2p1, glm::vec2 line2p2);
+bool                       DoLinesIntersect           (const auto& line1p1, const auto& line1p2, const auto& line2p1, const auto& line2p2);
+bool                       IsPointOnLine              (auto& lineP1, auto& lineP2, auto& p);
+bool                       IsPointInTriangle          (auto& pt, auto& triP1, auto& triP2, auto& triP3);
+double                     CrossIn2D                  (const MyVec2& in1, const MyVec2& in2);
+double                     CrossSign                  (auto& p1, auto& p2, auto& p3);
+std::vector<size_t>        GetQuadFromTri             (const std::array<size_t, 3>&inTri1, const std::array<size_t, 3>& inTri2);
 
 
 
 
-
+bool
+DoLinesIntersect(const auto& line1p1, const auto& line1p2, const auto& line2p1, const auto& line2p2)
+{
+	MyVec3 l1         = MyVec3(line1p2.x - line1p1.x, line1p2.y - line1p1.y, 0);
+	MyVec3 l2         = MyVec3(line2p2.x - line2p1.x, line2p2.y - line2p1.y, 0);
+	MyVec3 l1p1Tol2p1 = MyVec3(line2p1.x - line1p1.x, line2p1.y - line1p1.y, 0);
+	MyVec3 l1p1Tol2p2 = MyVec3(line2p2.x - line1p1.x, line2p2.y - line1p1.y, 0);
+	MyVec3 l2p1Tol1p1 = MyVec3(line1p1.x - line2p1.x, line1p1.y - line2p1.y, 0);
+	MyVec3 l2p1Tol1p2 = MyVec3(line1p2.x - line2p1.x, line1p2.y - line2p1.y, 0);
+	bool  req1 = glm::dot(glm::cross(l1, l1p1Tol2p1), glm::cross(l1, l1p1Tol2p2)) < 0;
+	bool  req2 = glm::dot(glm::cross(l2, l2p1Tol1p1), glm::cross(l2, l2p1Tol1p2)) < 0;
+	return req1 && req2;
+}
+bool
+IsPointOnLine(auto& lineP1, auto& lineP2, auto& p)
+{
+	if (lineP1 == p || lineP2 == p) { return true; }
+	MyVec3 dirP1ToP2 = MyVec3(lineP2.x - lineP1.x, lineP2.y - lineP1.y, 0);
+	auto dirP1Top = MyVec3(p.x - lineP1.x, p.y - lineP1.y, 0);
+	auto cross = glm::cross(dirP1ToP2, dirP1Top);
+	if (cross.z != 0) { return false; }
+	if (dirP1ToP2.x != 0)
+	{
+		auto rslt = (dirP1Top.x / dirP1ToP2.x);
+		return rslt >= 0 && rslt <= 1;
+	}
+	else if (dirP1ToP2.y != 0)
+	{
+		auto rslt = (dirP1Top.y / dirP1ToP2.y);
+		return rslt >= 0 && rslt <= 1;
+	}
+	throw std::logic_error("somehow .x and .y are both 0 in dirP1ToP2");
+	return 0;
+}
 bool
 IsPointInTriangle(auto& pt, auto& triP1, auto& triP2, auto& triP3)
 {

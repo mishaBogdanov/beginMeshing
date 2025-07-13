@@ -2,6 +2,8 @@
 #include<array>
 #include <algorithm>
 #include "../modeling/MyMath.h"
+#define USE_EDGES 1
+#define SAFE_MODE 1
 
 template<typename T, size_t N>
 struct OrderedArrayHash 

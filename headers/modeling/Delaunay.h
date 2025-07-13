@@ -9,14 +9,17 @@
 #include <fstream>
 #include "../core/Definitions.h"
 #include "TwoDMeshContainer.h"
+#include <list>
 
 class Delaunay
 {
 public:
+    using MshCont    = TwoDMeshContainer;
+public:
 	Mesh* Create2DUnconstrained     (std::string inPath);
     Mesh* Create2DConstrained       (std::string inPath);
     Mesh* Create2DConsWEdge         (std::string inPath);
-    Mesh* Create2DConsWEdgeNew      (std::string inPath);
+    Mesh* Create2DUnconstrainedNew  (std::string inPath);
     Mesh* Create2DConsSmoothedWEdge (std::string inPath, float pointDist = 0.3, float sclForFillPts = 2.5, int jmpForFillPts = 1);
 private:
     struct IntersectionData
@@ -38,6 +41,19 @@ private:
         std::pair<int64_t, int64_t> edge2;
         glm::vec2 point2;
     };
+    struct IntersectionDataNew
+    {
+        enum class TypeIntersection
+        {
+            point,
+            edge,
+            edgeEdgePrll,
+            noIntersection
+        };
+        TypeIntersection      type;
+        MyVec2                point;
+        MshCont::EdgeNds      edge;
+    };
     struct SortedData
     {
         size_t location;
@@ -57,9 +73,13 @@ private:
     void CreateFirstTriNew();
     void DeleteExtraPointTriNew();
     Mesh* CreateModelNew();
+    void ForceConstraintsNew();
+    std::list<IntersectionDataNew> GetIntersectionsNew( size_t inBeginIdx, size_t inEndIdx);
+    void HandleIntersectionsNew(std::list<IntersectionDataNew> inData);
+    void AddExtraPointsSimpleNew(float inDist, float inFillDist, int jmpForFillPts);
+
+
     void VerifyDelaunayNew();
-
-
     void CompareMshContainerWithOld();
 
     void ForceConstraints();

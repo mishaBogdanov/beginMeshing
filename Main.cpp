@@ -11,8 +11,6 @@
 #include "headers/modeling/MyMath.h"
 #include "headers/testing/LineIntersectionTesting.h"
 #include "headers/modeling/TwoDMeshContainer.h"
-#define USE_EDGES 0
-#define SAFE_MODE 0
 int main()
 {
 	//glm::vec2 p0 = { 0,0 }, p1 = { 1,1 }, p2 = { 0.5, 0.5 }, p3 = { 0,2 };
@@ -38,7 +36,8 @@ int main()
 	MainRenderer renderer;
 	MainEngine   mainEngine;
 	Camera       mainCamera(SCREEN_HEIGH, SCREEN_WIDTH, 1, glm::vec3(3.5f, 3.5f, 13.0f));
-	//Mesh         testCube("./models/helicopter.object", 10, glm::vec3(0,0,0));
+	//Mesh         testCube("./models/cube.object", 0.05, glm::vec3(0, 0, 0));
+	//Mesh         testCube2("./models/cube.object", 0.05, glm::vec3(2,1,0));
 	//std::vector<std::vector<glm::vec3>> f = { {{0,0,0},{100,0,0},{0,100,0}} };
 	//std::vector<std::vector<GLuint>> k = { {0,1,2} };
 	//MyVec3 p = { 0,0,1 };
@@ -48,7 +47,12 @@ int main()
 	Delaunay del;
 	//auto testMesh = del.Create2DConsSmoothedWEdge("./models/testButerfly.delaunay", 0.1, 1, 4);
 	//auto testMesh = del.Create2DUnconstrained("./models/points2.delaunay");
-	auto testMesh = del.Create2DConsWEdgeNew("./models/testButerfly.delaunay");
+	//auto p= IsPolygonConvex({ {0,0}, {1,0}, {1,1} }); // true
+	//auto k= IsPolygonConvex({ {0,0}, {1,0}, {10000,1} }); // true
+	//auto j = IsPolygonConvex({ {0,0}, {1,0}, {1,1}, {0,1} }); // true
+	//auto h = IsPolygonConvex({ {0,0}, {0,1}, {1,1}, {0.2,0.20001}}); // false
+	//auto g = IsPolygonConvex({ {0,0}, {1,0}, {1,1} });
+	auto testMesh = del.Create2DUnconstrainedNew("./models/testButerflyNew.delaunay");
 
 
 
@@ -59,6 +63,8 @@ int main()
 
 
 	renderer.AddMesh(testMesh);
+	//renderer.AddMesh(&testCube);
+	//renderer.AddMesh(&testCube2);
 	mainCamera.setMatrixView();
 	for (auto& shader : renderer.GetShaders())
 	{

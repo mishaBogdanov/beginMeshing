@@ -136,6 +136,8 @@ Mesh::Load(std::string inName, float inScale, glm::vec3 inLocation)
 		mCurCm = currentSum / (float)mBoundingBox.size();
 		mOriginalCm = mCurCm;
 		mCurCm = inLocation;
+		auto identity = glm::mat4(1);
+		mCurPosMatrix = glm::translate(identity, mCurCm);
 		file.close();
 	}
 }

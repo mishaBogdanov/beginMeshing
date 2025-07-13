@@ -26,21 +26,19 @@ Delaunay::Create2DConsWEdge(std::string inPath)
 	return CreateModel();
 }
 Mesh* 
-Delaunay::Create2DConsWEdgeNew(std::string inPath)
+Delaunay::Create2DUnconstrainedNew(std::string inPath)
 {
-	//mMshContainer.readFile(inPath);
-	PopulatePoints(inPath);
-	AddExtraPoints(0.12, 1, 1);
-	mMshContainer.populateFromGlm(mPoints, mEdges);
-	Timer::startTime();
-	//Create2DUnconstrained();
-	Timer::time("old_finished");
+	//PopulatePoints(inPath);
+	//AddExtraPoints(0.1, 1, 1);
+	mMshContainer.readFile(inPath);
+	AddExtraPointsSimpleNew(0.5, 0.5, 0);
+	//mMshContainer.populateFromGlm(mPoints, mEdges);
+	//Timer::startTime();
 	Create2DUnconstrainedNew();
-	Timer::time("newFinished_finished");
-	Timer::stopTime();
-	std::cout << mPoints.size();
-	//CompareMshContainerWithOld();
-	//VerifyDelaunayNew();
+	//Timer::time("stopped");
+	//Timer::stopTime();
+	//std::cout << mPoints.size();
+	ForceConstraintsNew();
 	return CreateModelNew();
 }
 Mesh*
@@ -49,8 +47,8 @@ Delaunay::Create2DConsSmoothedWEdge(std::string inPath, float pointDist, float s
 	PopulatePoints(std::move(inPath));
 	AddExtraPoints(pointDist, sclForFillPts, jmpForFillPts);
 	Create2DUnconstrained();
-	//ForceConstraints();
-	//DeleteOutsideTriangles();
+	ForceConstraints();
+	DeleteOutsideTriangles();
 	return CreateModel();
 }
 void 
@@ -106,34 +104,6 @@ Delaunay::Create2DUnconstrainedNew()
 				visitedEdge[{ curTri[0], curTri[2] }]++;
 			}
 		}
-
-
-
-
-
-
-		//auto  neighbors = mMshContainer.getNeighborTri(tri);
-		//triToDelete.push_back(tri);
-		//visitedEdge[{ tri[0], tri[1] }]++;
-		//visitedEdge[{ tri[1], tri[2] }]++;
-		//visitedEdge[{ tri[0], tri[2] }]++;
-		//for (auto& neighborTri : mMshContainer.getNeighborTri(tri))
-		//{
-		//	if (IsPointInCircumference(mMshContainer.getPoints()[ptIdx],
-		//		mMshContainer.getPoints()[neighborTri[0]],
-		//		mMshContainer.getPoints()[neighborTri[1]],
-		//		mMshContainer.getPoints()[neighborTri[2]]))
-		//	{
-		//		if (neighborTri != triToDelete[0])
-		//		{
-		//			triToDelete.push_back(neighborTri);
-		//			visitedEdge[{ neighborTri[0], neighborTri[1] }]++;
-		//			visitedEdge[{ neighborTri[1], neighborTri[2] }]++;
-		//			visitedEdge[{ neighborTri[0], neighborTri[2] }]++;
-		//			std::sort(triToDelete[triToDelete.size() - 1].begin(), triToDelete[triToDelete.size() - 1].end());
-		//		}
-		//	}
-		//}
 		for (auto& edge : visitedEdge)
 		{
 			if (edge.second < 2)
@@ -149,7 +119,7 @@ Delaunay::Create2DUnconstrainedNew()
 void
 Delaunay::CreateFirstTriNew()
 {
-	auto maxMin = mMshContainer.getMaxMin();
+	auto maxMin = mMshContainer.getMinMax();
 	double avgX = (maxMin[0] + maxMin[2]) / 2.0;
 	double avgY = (maxMin[1] + maxMin[3]) / 2.0;
 	double xDiff = maxMin[2] - maxMin[0];
@@ -490,6 +460,161 @@ Delaunay::CreateModelNew()
 	}
 	return new Mesh({ std::move(vertices) }, { std::move(indices) });
 }
+void
+Delaunay::ForceConstraintsNew()
+{
+	auto nEdges = mMshContainer.getNumEdges();
+	for (size_t edgeIdx = 0; edgeIdx < nEdges; edgeIdx++)
+	{
+		auto edgePtIdx = mMshContainer.getEdgeIdx(edgeIdx);
+		if(edgePtIdx[1] < edgePtIdx[0]) 
+		{
+			auto temp = edgePtIdx[1];
+			edgePtIdx[1] = edgePtIdx[0];
+			edgePtIdx[0] = temp;
+		}
+		if (mMshContainer.doesEdgeExist(edgePtIdx[0], edgePtIdx[1])) { continue; }
+		auto edgeIntersectionData = GetIntersectionsNew(edgePtIdx[0], edgePtIdx[1]);
+		HandleIntersectionsNew(std::move(edgeIntersectionData));
+	}
+}
+std::list<Delaunay::IntersectionDataNew>
+Delaunay::GetIntersectionsNew(size_t inBeginIdx, size_t inEndIdx)
+{
+	std::list<IntersectionDataNew> outVal;
+	MshCont::EdgeHash visitedEdge;
+	MshCont::PointHash visitedPoints;
+	auto prevPtId = inBeginIdx;
+	visitedPoints.insert(mMshContainer.getPoints()[prevPtId]);
+	MshCont::EdgeNds prevEdge = { -1, -1 };
+	bool isLastPt = true;
+	MshCont::Tri nextTri;
+	while (true)
+	{
+		bool cont = false;
+		MshCont::TriPtrHash triOptions;
+		if (isLastPt)
+		{
+			triOptions = mMshContainer.getTriFromPts(prevPtId);
+		}
+		else
+		{
+			triOptions = mMshContainer.getTriFromEdge(prevEdge[0], prevEdge[1]);
+		}
+
+		for (auto& triPtr : triOptions)
+		{
+			if (triPtr->at(0) == inEndIdx || triPtr->at(1) == inEndIdx || triPtr->at(2) == inEndIdx) { return outVal; }
+			for (int i = 0; i < 3; i++)
+			{
+				if (!visitedPoints.contains(mMshContainer.getPoints()[triPtr->at(i)]) && IsPointOnLine(mMshContainer.getPoints()[prevPtId],
+															                                           mMshContainer.getPoints()[inEndIdx],
+															                                           mMshContainer.getPoints()[triPtr->at(i)]))
+				{
+					visitedPoints.insert(mMshContainer.getPoints()[triPtr->at(i)]);
+					cont = true;
+					isLastPt = true;
+					prevPtId = triPtr->at(i);
+					//outVal.push_back({ IntersectionDataNew::TypeIntersection::point, mMshContainer.getPoints()[triPtr->at(i)], {} });
+					continue;
+				}
+				size_t idx1 = triPtr->at(i);
+				size_t idx2 = triPtr->at((i+1)%3);
+				if (idx2 < idx1) { auto temp = idx2; idx2 = idx1; idx1 = temp; }
+				if (!visitedEdge.contains({ idx1, idx2 }) && DoLinesIntersect(mMshContainer.getPoints()[prevPtId],
+															                  mMshContainer.getPoints()[inEndIdx],
+																		      mMshContainer.getPoints()[idx1],
+															                  mMshContainer.getPoints()[idx2]))
+				{
+					visitedEdge.insert({ idx1, idx2 });
+					cont = true;
+					isLastPt = false;
+					prevEdge = { idx1, idx2 };
+					outVal.push_back({ IntersectionDataNew::TypeIntersection::edge, {}, {idx1, idx2} });
+					continue;
+				}
+			}
+			if (cont) { continue; }
+		}
+	}
+	return outVal;
+}
+void 
+Delaunay::HandleIntersectionsNew(std::list<IntersectionDataNew> inData)
+{
+	auto it = inData.begin();
+	int i = 0;
+	while (!inData.empty())
+	{
+		i++;
+		auto& tris = mMshContainer.getTriFromEdge(it->edge);
+#if SAFE_MODE == 1
+		if (tris.size() != 2) { throw std::logic_error("edge has dif num of tri than 2"); }
+#endif
+		auto itr = tris.begin();
+		auto& tri1 = **itr;
+		itr++;
+		auto& tri2 = **itr;
+		auto quad = GetQuadFromTri(tri1, tri2);
+		if (IsPolygonConvex({ mMshContainer.getPoints()[quad[0]],
+							  mMshContainer.getPoints()[quad[1]],
+							  mMshContainer.getPoints()[quad[2]],
+							  mMshContainer.getPoints()[quad[3]]}))
+		{
+			MshCont::Tri tri1New = { quad[0], quad[1], quad[3] };
+			MshCont::Tri tri2New = { quad[1], quad[2], quad[3] };
+			std::sort(tri1New.begin(), tri1New.end());
+			std::sort(tri2New.begin(), tri2New.end());
+			mMshContainer.removeTriangle(tri1);
+			mMshContainer.removeTriangle(tri2);
+			mMshContainer.addTriangle(tri1New);
+			mMshContainer.addTriangle(tri2New);
+			it = inData.erase(it);
+		}
+		else
+		{
+			it++;
+		}
+		if (it == inData.end()) { it = inData.begin(); }
+		bool p = false;
+		if (p) { return; }
+		if (i > 1000)
+		{
+			return;
+		}
+	}
+}
+void 
+Delaunay::AddExtraPointsSimpleNew(float inDist, float inFillDist, int jmpForFillPts)
+{
+	double newMinX, newMinY, newMaxX, newMaxY;
+	auto edges = mMshContainer.getMinMax();
+	double xDiff = edges[2] - edges[0];
+	double yDiff = edges[3] - edges[1];
+	double xAvg  = (edges[2] + edges[0])/2;
+	double yAvg  = (edges[1] + edges[3])/2;
+	newMinX = xAvg - xDiff / 1.8;
+	newMaxX = xAvg + xDiff / 1.8;
+	newMinY = yAvg - yDiff / 1.8;
+	newMaxY = yAvg + yDiff / 1.8;
+	size_t nJmpsV = yDiff * 1.12 / inFillDist + 2;
+	size_t nJmpsH = xDiff * 1.12 / inFillDist + 2;
+	for (size_t i = 0; i < nJmpsV; i++)
+	{
+		double offset = i % 2 == 0? 0 : inFillDist / 2;
+		for (size_t j = 0; j < nJmpsH; j++)
+		{
+			mMshContainer.addPoint( newMinX + offset + inFillDist * j, newMinY + inFillDist * i);
+		}
+	}
+	auto nEdges = mMshContainer.getNumEdges();
+	for (size_t i = 0; i < nEdges; i++)
+	{
+		auto edge = mMshContainer.getEdgeIdx(i);
+
+	}
+}
+
 std::vector<Delaunay::IntersectionData>
 Delaunay::GetTriContainingEdge(glm::vec2 p1, glm::vec2 p2)
 {

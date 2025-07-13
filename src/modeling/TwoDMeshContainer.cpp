@@ -49,10 +49,29 @@ TwoDMeshContainer::removeTriangle         ( std::array<size_t, 3>           inAr
 	mPointToTri[inArray[0]].erase(&*itr);
 	mPointToTri[inArray[1]].erase(&*itr);
 	mPointToTri[inArray[2]].erase(&*itr);
+
 #if USE_EDGES == 1
-	mEdgeToTri[{inArray[0], inArray[1]}].erase(&*itr);
-	mEdgeToTri[{inArray[1], inArray[2]}].erase(&*itr);
-	mEdgeToTri[{inArray[0], inArray[2]}].erase(&*itr);
+	auto edgeItr = mEdgeToTri.find({ inArray[0], inArray[1] });
+#if SAFE_MODE == 1
+	if (edgeItr == mEdgeToTri.end()) { throw std::logic_error("somehow deleting tri with unregistered edges"); }
+#endif
+	edgeItr->second.erase(&*itr);
+	if (edgeItr->second.empty()) { mEdgeToTri.erase(edgeItr); }
+
+	edgeItr = mEdgeToTri.find({ inArray[1], inArray[2] });
+#if SAFE_MODE == 1
+	if (edgeItr == mEdgeToTri.end()) { throw std::logic_error("somehow deleting tri with unregistered edges"); }
+#endif
+	edgeItr->second.erase(&*itr);
+	if (edgeItr->second.empty()) { mEdgeToTri.erase(edgeItr); }
+
+	edgeItr = mEdgeToTri.find({ inArray[0], inArray[2] });
+#if SAFE_MODE == 1
+	if (edgeItr == mEdgeToTri.end()) { throw std::logic_error("somehow deleting tri with unregistered edges"); }
+#endif
+	edgeItr->second.erase(&*itr);
+	if (edgeItr->second.empty()) { mEdgeToTri.erase(edgeItr); }
+
 #endif
 	mTriangles.erase(itr);
 }
@@ -193,6 +212,15 @@ TwoDMeshContainer::getNeighborTri         ( std::array<size_t, 3>           inAr
 	for (auto& tri : triCollected) { outVal.push_back(tri); }
 	return std::move(outVal);
 }
+bool
+TwoDMeshContainer::doesEdgeExist          ( size_t                          inPtIdx1,
+                                            size_t                          inPtIdx2)
+{
+#if SAFE_MODE == 1
+	if (inPtIdx1 >= inPtIdx2) { throw std::logic_error("doesEdgeExist received unordered pair"); }
+#endif
+	return mEdgeToTri.contains({ inPtIdx1, inPtIdx2 });
+}
 void
 TwoDMeshContainer::removeAndReplaceTri    ( TriVec                          toRemove, 
 	                                        TriVec                          toInsert,
@@ -240,6 +268,35 @@ TwoDMeshContainer::removeLastPoint        ( )
 	mPointToTri.erase(mPoints.size() - 1);
 	mPoints.pop_back();
 }
+const TwoDMeshContainer::TriPtrHash& 
+TwoDMeshContainer::getTriFromEdge         ( size_t                    inPtIdx1,
+                                            size_t                    inPtIdx2)
+{
+#if SAFE_MODE == 1
+	if (inPtIdx1 >= inPtIdx2) { throw std::logic_error("passed invalid pt idx to getTriFromEdge"); }
+#endif
+#if USE_EDGES == 1
+	return mEdgeToTri[{inPtIdx1, inPtIdx2}];
+#else
+	throw std::logic_error("TwoDMeshContainer::getTriFromEdge not yet implemented for not using edge hash");
+	return {};
+#endif
+}
+const TwoDMeshContainer::TriPtrHash& 
+TwoDMeshContainer::getTriFromEdge         ( EdgeNds                   inPtIds)
+{
+#if SAFE_MODE == 1
+	if (inPtIds[0] >= inPtIds[1]) { throw std::logic_error("passed invalid pt idx to getTriFromEdge"); }
+#endif
+#if USE_EDGES == 1
+	return mEdgeToTri[inPtIds];
+#else
+	throw std::logic_error("TwoDMeshContainer::getTriFromEdge not yet implemented for not using edge hash");
+	return {};
+#endif
+}
+
+
 
 
 

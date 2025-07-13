@@ -1,8 +1,10 @@
 #include "../../headers/modeling/MyMath.h"
 #include <cmath>
-#include <stdexcept>
 
-std::pair<bool, glm::vec2> GetCenterTriangle(const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& p3)
+std::pair<bool, glm::vec2> 
+GetCenterTriangle                                  (const glm::vec2&                 p1, 
+                                                    const glm::vec2&                 p2,
+	                                                const glm::vec2&                 p3)
 {
 	glm::vec3 p1ToP2 = glm::vec3(p2.x - p1.x, p2.y - p1.y, 0);
 	glm::vec3 p2ToP3 = glm::vec3(p3.x - p2.x, p3.y - p2.y, 0);
@@ -15,7 +17,10 @@ std::pair<bool, glm::vec2> GetCenterTriangle(const glm::vec2& p1, const glm::vec
 	return { true, { (-(p1.y - p2.y) * u + (p1.y - p3.y) * t) / (2 * j),
 			 ((p1.x - p2.x)* u - (p1.x - p3.x) * t) / (2 * j)} };
 }
-std::pair<bool, MyVec2>    GetCenterTriangle(const MyVec2& p1, const MyVec2& p2, const MyVec2& p3)
+std::pair<bool, MyVec2>    
+GetCenterTriangle                                  (const MyVec2&                    p1, 
+                                                    const MyVec2&                    p2, 
+													const MyVec2&                    p3)
 {
 	glm::vec3 p1ToP2 = glm::vec3(p2.x - p1.x, p2.y - p1.y, 0);
 	glm::vec3 p2ToP3 = glm::vec3(p3.x - p2.x, p3.y - p2.y, 0);
@@ -28,8 +33,35 @@ std::pair<bool, MyVec2>    GetCenterTriangle(const MyVec2& p1, const MyVec2& p2,
 	return { true, { (-(p1.y - p2.y) * u + (p1.y - p3.y) * t) / (2 * j),
 			 ((p1.x - p2.x) * u - (p1.x - p3.x) * t) / (2 * j)} };
 }
-
-LineIntersectionData GetLineLineIntersection(glm::vec2 line1p1, glm::vec2 line1p2, glm::vec2 line2p1, glm::vec2 line2p2)
+bool
+IsPolygonConvex                                    (std::vector<MyVec2>              inPoints)
+{
+	bool isNegative;
+	double firstSpin = 0;;
+	for (size_t idx1 = 0; idx1 < inPoints.size(); idx1++)
+	{
+		size_t idx2 = (idx1 + 1) % inPoints.size();
+		size_t idx3 = (idx1 + 2) % inPoints.size();
+		MyVec2 vec1 = inPoints[idx2] - inPoints[idx1];
+		MyVec2 vec2 = inPoints[idx3] - inPoints[idx2];
+		double spin = CrossIn2D(vec1, vec2);
+		if (firstSpin == 0 && spin == 0) { continue; }
+		else if (firstSpin == 0) { firstSpin = spin; }
+		else if (firstSpin * spin <= 0) { return false; }
+	}
+	return true;
+}
+double
+CrossIn2D                                          (const MyVec2&                    in1,
+	                                                const MyVec2&                    in2)
+{
+	return in1.x * in2.y - in1.y * in2.x;
+}
+LineIntersectionData 
+GetLineLineIntersection                            (glm::vec2                        line1p1, 
+	                                                glm::vec2                        line1p2, 
+	                                                glm::vec2                        line2p1, 
+	                                                glm::vec2                        line2p2)
 {
 	glm::vec2 overlapPoint;
 	bool sharePoint = false;
@@ -152,28 +184,50 @@ LineIntersectionData GetLineLineIntersection(glm::vec2 line1p1, glm::vec2 line1p
 	if(intersection == line2p1 || intersection == line2p2) { return { LineIntersectionData::type::lineContainsPoint, intersection, {0,0} }; }
 	return { LineIntersectionData::type::lineLineIntersection, intersection, {0,0} };
 }
-
-bool
-IsPointOnLine(glm::vec2& lineP1, glm::vec2& lineP2, glm::vec2 p)
+std::vector<size_t>
+GetQuadFromTri                                     (const std::array<size_t, 3>&     inTri1, 
+	                                                const std::array<size_t, 3>&     inTri2)
 {
-	if (lineP1 == p || lineP2 == p) { return true; }
-	glm::vec3 dirP1ToP2 = glm::vec3(lineP2.x - lineP1.x, lineP2.y - lineP1.y, 0);
-	auto dirP1Top = glm::vec3(p.x - lineP1.x, p.y - lineP1.y, 0);
-	auto cross = glm::cross(dirP1ToP2, dirP1Top);
-	if (cross.z != 0) { return false; }
-	if (dirP1ToP2.x != 0)
+	int idx11 = -1, idx12 = -1, idx13, idx21 = -1, idx22 = -1, idx23;
+	std::vector<size_t> outVal;
+	for (int i = 0; i < 3; i++)
 	{
-		auto rslt = (dirP1Top.x / dirP1ToP2.x);
-		return rslt >= 0 && rslt <= 1;
+		for (int j = 0; j < 3; j++)
+		{
+			if (inTri1[i] == inTri2[j])
+			{
+				if (idx11 == -1)
+				{
+					idx11 = i;
+				}
+				else
+				{
+					idx12 = i;
+				}
+				if (idx21 == -1)
+				{
+					idx21 = j;
+					continue;
+				}
+				else
+				{
+					idx22 = j;
+					continue;
+				}
+			}
+		}
 	}
-	else if (dirP1ToP2.y != 0)
-	{
-		auto rslt = (dirP1Top.y / dirP1ToP2.y);
-		return rslt >= 0 && rslt <= 1;
-	}
-	throw std::logic_error("somehow .x and .y are both 0 in dirP1ToP2");
-	return 0;
+	if (idx11 == 0 && idx12 == 1) { idx13 = 2; }
+	if (idx11 == 1 && idx12 == 2) { idx13 = 0; }
+	if (idx11 == 0 && idx12 == 2) { idx13 = 1; }
+	if (idx21 == 0 && idx22 == 1) { idx23 = 2; }
+	if (idx21 == 1 && idx22 == 2) { idx23 = 0; }
+	if (idx21 == 0 && idx22 == 2) { idx23 = 1; }
+	outVal = { inTri1[idx11], inTri1[idx13], inTri1[idx12], inTri2[idx23] };
+	return outVal;
 }
+
+
 
 
 

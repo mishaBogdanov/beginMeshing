@@ -1,2 +1,1 @@
-old_finished, 4475018
-newFinished_finished, 530953
+stopped, 461

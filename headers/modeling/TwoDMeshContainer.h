@@ -18,36 +18,46 @@ public:
     using SizeVec          = std::vector<size_t>;
     using SizeHash         = std::unordered_set<size_t>;
     using Tri              = std::array<size_t, 3>;
-    using TriPtrHash       = std::unordered_set<const std::array<size_t, 3>*>;
+    using TriPtrHash       = std::unordered_set<const Tri*>;
+    using EdgeNds          = std::array<size_t, 2>;
+    using PointHash        = std::unordered_set<MyVec2, Vec2Hash, Vec2Equal>;
 public:
-    void        populateFromGlm             ( std::vector<glm::vec2>&  inPts,
-                                              std::vector<size_t>&     inEdges);
-    void        addTriangle                 ( std::array<size_t, 3>    inArray);
-    void        removeTriangle              ( std::array<size_t, 3>    inArray);
-    void        readFile                    ( std::string              inLocation);
-    size_t      addPoint                    ( double                   inX, 
-                                              double                   inY);
-    size_t      addPoint                    ( MyVec2&                  inPt);
-    void        initializeDelaunay          ( std::array<size_t, 3>    inArray);
-    TriVec      getNeighborTri              ( std::array<size_t, 3>    inArray);
-    void        removeAndReplaceTri         ( TriVec                   toRemove, 
-                                              TriVec                   toReplace,
-                                              size_t                   toNotInclude);
-    const TriHash&   getRemainingTri   ( ) { return mTrianglesWithPoints; }
-    std::array<double,4>  getMaxMin         ( ) { return {mMinX, mMinY, mMaxX, mMaxY}; }
-    size_t                getNumPoints      ( ) { return mPoints.size(); }
-    bool                  hasFloatPoints    ( ) { return !mTrianglesWithPoints.empty(); }
-    const PointVec&       getPoints         ( ) { return mPoints; }
-    const SizeHash&       getPointsInTri    ( Tri                       inTri) { return mTriToContainedPoint[inTri];}
-    const TriHash&   getTriangles      ( ) { return mTriangles;}
-    void                  removeLastPoint   ( );
-    const TriPtrHash&     getTriFromPts     ( size_t                    inPtIdx) { return mPointToTri[inPtIdx]; }
+    void                  populateFromGlm      ( std::vector<glm::vec2>&  inPts,
+                                                 std::vector<size_t>&     inEdges);
+    void                  addTriangle          ( std::array<size_t, 3>    inArray);
+    void                  removeTriangle       ( std::array<size_t, 3>    inArray);
+    void                  readFile             ( std::string              inLocation);
+    size_t                addPoint             ( double                   inX, 
+                                                 double                   inY);
+    size_t                addPoint             ( MyVec2&                  inPt);
+    void                  initializeDelaunay   ( std::array<size_t, 3>    inArray);
+    TriVec                getNeighborTri       ( std::array<size_t, 3>    inArray);
+    void                  removeAndReplaceTri  ( TriVec                   toRemove, 
+                                                 TriVec                   toReplace,
+                                                 size_t                   toNotInclude);
+    const TriHash&        getRemainingTri      ( ) { return mTrianglesWithPoints; }
+    std::array<double,4>  getMinMax            ( ) { return {mMinX, mMinY, mMaxX, mMaxY}; }
+    size_t                getNumPoints         ( ) { return mPoints.size(); }
+    bool                  hasFloatPoints       ( ) { return !mTrianglesWithPoints.empty(); }
+    const PointVec&       getPoints            ( ) { return mPoints; }
+    const SizeHash&       getPointsInTri       ( Tri                       inTri) { return mTriToContainedPoint[inTri];}
+    const TriHash&        getTriangles         ( ) { return mTriangles;}
+    void                  removeLastPoint      ( );
+    const TriPtrHash&     getTriFromPts        ( size_t                    inPtIdx) { return mPointToTri[inPtIdx]; }
+    const TriPtrHash&     getTriFromEdge       ( size_t                    inPtIdx1,
+                                                 size_t                    inPtIdx2);
+    const TriPtrHash&     getTriFromEdge       ( EdgeNds                   inPtIds);
+    size_t                getNumEdges          ( ) { return mEdges.size()/2; }
+    EdgeNds               getEdgeIdx           ( size_t                    inEdgeIdx) { return {mEdges[inEdgeIdx*2], mEdges[inEdgeIdx*2+1]}; }
+    bool                  doesEdgeExist        ( size_t                    inPtIdx1,
+                                                 size_t                    inPtIdx2);
+    
 
 private:
     PointVec                                                                                                                         mPoints;
     std::vector<size_t>                                                                                                              mEdges;
     std::unordered_map<size_t, TriPtrHash>                                                                                           mPointToTri;
-    std::unordered_map<std::array<size_t, 2>, std::unordered_set<const std::array<size_t, 3>*>, OrderedArrayHash<size_t, 2>, OrderedArrayEqual<size_t, 2>>      mEdgeToTri;
+    std::unordered_map<std::array<size_t, 2>, TriPtrHash, OrderedArrayHash<size_t, 2>, OrderedArrayEqual<size_t, 2>>                 mEdgeToTri;
     std::unordered_map<MyVec2, size_t, Vec2Hash, Vec2Equal>                                                                          mPointToIdx;
     TriHash                                                                                                                          mTriangles;
     TriHash                                                                                                                          mTrianglesWithPoints;
