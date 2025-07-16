@@ -64,6 +64,7 @@ Before I used to shoot a ray straight up from each triangle, and see if it inter
 
 - simply reads the data from the file and populates the necessary data structures.
 
+## old code:
 ## Add Extra Points:
 
 - This function exists to add additional points to the model which can then be connected together to triangulate the mesh.
