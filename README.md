@@ -43,6 +43,11 @@ Before I used to shoot a ray straight up from each triangle, and see if it inter
 
 <img width="700" height="620" alt="Time_to_delete_outside_tri_vs_Total_Triangles" src="https://github.com/user-attachments/assets/d7d832d9-1357-4a29-bf1e-7814d68ce472" />
 
+## new gallery:
+
+<img width="793" height="471" alt="image" src="https://github.com/user-attachments/assets/5bfe172c-c056-48fe-89e9-3d79e345fa19" />
+
+
 
 
 ## heart of the application:
