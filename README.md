@@ -4,6 +4,8 @@
 
 ![image](https://github.com/user-attachments/assets/c1923c9e-942b-43f0-b46a-39f693979e03)
 
+Readme updated July 15th:
+
 This is my first attempt at making a 2D mesher. You are able to receive results like above by passing the coordinates of nodes, followed by indicies of nodes to connect by edge in order. (examples can be found in models folder with .delaunay extension)
 
 ## using the mesher:
@@ -12,6 +14,17 @@ This is my first attempt at making a 2D mesher. You are able to receive results 
 
 
 You just have to pass the path of the model data file, and 3 parameters which I will explain later.
+
+## jul 15th update:
+
+since first posting this repo, I made every algorithm much quicker and almost linear in time complexity.
+
+## Update to creating the 2D unconstrained delaunay triangulation:
+
+When I first create the super triangle I now keep track of which triangle every point is inside of, even if they're simply floating points (a point which is not part of any triangle). I also keep track of which triangles still have points inside, and run a loop which goes something like while(there are still triangles with points inside) pick the first triangle with points inside, pick the first floating point in the triangle, and perform a breadth first search on the triangles around to see which ones have the point inside the circumcircle.
+
+While this algorithm might be slower for super small models (~40 triangles) for large models with tens of thousands of triangles we perform significantly less circumcirle tests, rather than before where I checked every triangles circumcircle. I was surprised to run some tests and learn that this makes my delaunay triangulation run in what appears to be linear time!
+
 
 ## heart of the application:
 
