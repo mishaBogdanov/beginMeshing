@@ -47,6 +47,12 @@ Before I used to shoot a ray straight up from each triangle, and see if it inter
 
 <img width="793" height="471" alt="image" src="https://github.com/user-attachments/assets/5bfe172c-c056-48fe-89e9-3d79e345fa19" />
 
+<img width="790" height="747" alt="image" src="https://github.com/user-attachments/assets/277ebbeb-fad7-46fb-9948-25e9e0c3d009" />
+
+<img width="793" height="191" alt="image" src="https://github.com/user-attachments/assets/48734a42-ddba-4154-aae6-534cbc82c3ab" />
+
+
+
 
 
 
