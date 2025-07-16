@@ -10,7 +10,8 @@
 #include "headers/modeling/Delaunay.h"
 #include "headers/modeling/MyMath.h"
 #include "headers/testing/LineIntersectionTesting.h"
-#include "headers/modeling/TwoDMeshContainer.h"
+#include "headers/modeling/TwoDMeshContainer.h"'
+#include <functional>'
 int main()
 {
 	//glm::vec2 p0 = { 0,0 }, p1 = { 1,1 }, p2 = { 0.5, 0.5 }, p3 = { 0,2 };
@@ -35,7 +36,7 @@ int main()
 
 	MainRenderer renderer;
 	MainEngine   mainEngine;
-	Camera       mainCamera(SCREEN_HEIGH, SCREEN_WIDTH, 1, glm::vec3(3.5f, 3.5f, 13.0f));
+	Camera       mainCamera(SCREEN_WIDTH, SCREEN_HEIGH, 1, glm::vec3(3.5f, 3.5f, 13.0f));
 	//Mesh         testCube("./models/cube.object", 0.05, glm::vec3(0, 0, 0));
 	//Mesh         testCube2("./models/cube.object", 0.05, glm::vec3(2,1,0));
 	//std::vector<std::vector<glm::vec3>> f = { {{0,0,0},{100,0,0},{0,100,0}} };
@@ -52,7 +53,15 @@ int main()
 	//auto j = IsPolygonConvex({ {0,0}, {1,0}, {1,1}, {0,1} }); // true
 	//auto h = IsPolygonConvex({ {0,0}, {0,1}, {1,1}, {0.2,0.20001}}); // false
 	//auto g = IsPolygonConvex({ {0,0}, {1,0}, {1,1} });
-	auto testMesh = del.Create2DUnconstrainedNew("./models/testButerflyNew.delaunay");
+	auto debugCubes = [&](std::vector<MyVec2> inVec)
+		{
+			for (auto& vec : inVec)
+			{
+				Mesh* testCube = new Mesh("./models/cube.object", 0.01, glm::vec3(vec.x, vec.y, 0));
+				renderer.AddMesh(testCube);
+			}
+		};
+	auto testMesh = del.Create2DConstrainedNew("./models/testCar.delaunay", 0.1, 0.4);
 
 
 

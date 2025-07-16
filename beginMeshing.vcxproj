@@ -156,6 +156,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\core\CsvWriter.cpp" />
     <ClCompile Include="src\testing\LineIntersectionTesting.cpp" />
     <ClCompile Include="src\modeling\MyMath.cpp" />
     <ClCompile Include="src\modeling\Delaunay.cpp" />
@@ -177,6 +178,7 @@
     <ClCompile Include="src\modeling\TwoDMeshContainer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="headers\core\CsvWriter.h" />
     <ClInclude Include="headers\modeling\Delaunay.h" />
     <ClInclude Include="headers\modeling\Edge.h" />
     <ClInclude Include="headers\modeling\Body.h" />
@@ -198,6 +200,7 @@
     <ClInclude Include="headers\core\Definitions.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="models\buterflyDebug.delaunay" />
     <None Include="models\cube.object" />
     <None Include="models\helicopter.object" />
     <None Include="models\points.delaunay" />
@@ -211,9 +214,10 @@
     <None Include="models\testButerfly.delouney" />
     <None Include="models\testButerflyGPT.delouney" />
     <None Include="models\testButerflyNew.delaunay" />
-    <None Include="models\testCar.delouney" />
+    <None Include="models\testCar.delaunay" />
     <None Include="models\testFish.delouney" />
     <None Include="models\testFish2.delouney" />
+    <None Include="models\testTwoPoint.delaunay" />
     <None Include="models\testWithConcave.delaunay" />
     <None Include="shaders\default.frag" />
     <None Include="shaders\default.geom" />
@@ -223,6 +227,7 @@
     <None Include="shaders\test.frag" />
     <None Include="shaders\test.geom" />
     <None Include="shaders\test.vert" />
+    <None Include="timingData.csv" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

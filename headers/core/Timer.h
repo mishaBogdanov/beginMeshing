@@ -12,6 +12,7 @@ public:
     static void startTime();
     static std::int64_t time(std::string title = "");
     static void stopTime(const std::string& filename = "timelog.txt");
+    static std::vector<std::int64_t> getIntervals() { return mIntervals; }
 
 private:
     using clock_t = std::chrono::steady_clock;

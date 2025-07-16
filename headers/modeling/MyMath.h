@@ -41,6 +41,32 @@ public:
 		result -= rhs;
 		return result;
 	}
+	MyVec2& operator/=(const double& rhs)
+	{
+		x /= rhs;
+		y /= rhs;
+		return *this;
+	}
+
+	friend MyVec2 operator/(const MyVec2& lhs, const double& rhs)
+	{
+		MyVec2 result(lhs);
+		result /= rhs;
+		return result;
+	}
+	MyVec2& operator*=(const double& rhs)
+	{
+		x *= rhs;
+		y *= rhs;
+		return *this;
+	}
+
+	friend MyVec2 operator*(const MyVec2& lhs, const double& rhs)
+	{
+		MyVec2 result(lhs);
+		result *= rhs;
+		return result;
+	}
 
 	bool operator==(const MyVec2& rhs) const
 	{
@@ -92,6 +118,34 @@ public:
 	{
 		return (rhs.x == x) && (rhs.y == y) && (rhs.z == z);
 	}
+	MyVec3& operator/=(const double& rhs)
+	{
+		x /= rhs;
+		y /= rhs;
+		z /= rhs;
+		return *this;
+	}
+
+	friend MyVec3 operator/(const MyVec3& lhs, const double& rhs)
+	{
+		MyVec3 result(lhs);
+		result /= rhs;
+		return result;
+	}
+	MyVec3& operator*=(const double& rhs)
+	{
+		x *= rhs;
+		y *= rhs;
+		z *= rhs;
+		return *this;
+	}
+
+	friend MyVec3 operator*(const MyVec3& lhs, const double& rhs)
+	{
+		MyVec3 result(lhs);
+		result *= rhs;
+		return result;
+	}
 };
 struct LineIntersectionData
 {
@@ -122,6 +176,14 @@ namespace glm
 	{
 		return { in1.y * in2.z - in1.z * in2.y, in2.x * in1.z - in1.x * in2.z, in1.x * in2.y - in1.y * in2.x };
 	}
+	inline MyVec2 normalize(const MyVec2& in1)
+	{
+		return in1 / sqrt(in1.x*in1.x + in1.y*in1.y);
+	}
+	inline MyVec3 normalize(const MyVec3& in1)
+	{
+		return in1 / sqrt(in1.x * in1.x + in1.y * in1.y);
+	}
 }
 
 
@@ -131,7 +193,9 @@ bool                       IsPointInCircumference     (const auto& pt, const aut
 bool                       IsPolygonConvex            (std::vector<MyVec2> inPoints);
 LineIntersectionData       GetLineLineIntersection    (glm::vec2 line1p1, glm::vec2 line1p2, glm::vec2 line2p1, glm::vec2 line2p2);
 bool                       DoLinesIntersect           (const auto& line1p1, const auto& line1p2, const auto& line2p1, const auto& line2p2);
+bool                       DoLinesIntersect           (const auto& line1p1, const auto& line1p2, const auto& line2p1, const auto& line2p2, double leniance);
 bool                       IsPointOnLine              (auto& lineP1, auto& lineP2, auto& p);
+bool                       IsPointOnLine              (auto& lineP1, auto& lineP2, auto& p, double leniance);
 bool                       IsPointInTriangle          (auto& pt, auto& triP1, auto& triP2, auto& triP3);
 double                     CrossIn2D                  (const MyVec2& in1, const MyVec2& in2);
 double                     CrossSign                  (auto& p1, auto& p2, auto& p3);
@@ -154,6 +218,19 @@ DoLinesIntersect(const auto& line1p1, const auto& line1p2, const auto& line2p1, 
 	return req1 && req2;
 }
 bool
+DoLinesIntersect(const auto& line1p1, const auto& line1p2, const auto& line2p1, const auto& line2p2, double leniance)
+{
+	MyVec3 l1         = glm::normalize(MyVec3(line1p2.x - line1p1.x, line1p2.y - line1p1.y, 0));
+	MyVec3 l2         = glm::normalize(MyVec3(line2p2.x - line2p1.x, line2p2.y - line2p1.y, 0));
+	MyVec3 l1p1Tol2p1 = glm::normalize(MyVec3(line2p1.x - line1p1.x, line2p1.y - line1p1.y, 0));
+	MyVec3 l1p1Tol2p2 = glm::normalize(MyVec3(line2p2.x - line1p1.x, line2p2.y - line1p1.y, 0));
+	MyVec3 l2p1Tol1p1 = glm::normalize(MyVec3(line1p1.x - line2p1.x, line1p1.y - line2p1.y, 0));
+	MyVec3 l2p1Tol1p2 = glm::normalize(MyVec3(line1p2.x - line2p1.x, line1p2.y - line2p1.y, 0));
+	bool  req1 = glm::dot(glm::cross(l1, l1p1Tol2p1), glm::cross(l1, l1p1Tol2p2)) < leniance;
+	bool  req2 = glm::dot(glm::cross(l2, l2p1Tol1p1), glm::cross(l2, l2p1Tol1p2)) < leniance;
+	return req1 && req2;
+}
+bool
 IsPointOnLine(auto& lineP1, auto& lineP2, auto& p)
 {
 	if (lineP1 == p || lineP2 == p) { return true; }
@@ -161,6 +238,29 @@ IsPointOnLine(auto& lineP1, auto& lineP2, auto& p)
 	auto dirP1Top = MyVec3(p.x - lineP1.x, p.y - lineP1.y, 0);
 	auto cross = glm::cross(dirP1ToP2, dirP1Top);
 	if (cross.z != 0) { return false; }
+	if (dirP1ToP2.x != 0)
+	{
+		auto rslt = (dirP1Top.x / dirP1ToP2.x);
+		return rslt >= 0 && rslt <= 1;
+	}
+	else if (dirP1ToP2.y != 0)
+	{
+		auto rslt = (dirP1Top.y / dirP1ToP2.y);
+		return rslt >= 0 && rslt <= 1;
+	}
+	throw std::logic_error("somehow .x and .y are both 0 in dirP1ToP2");
+	return 0;
+}
+bool
+IsPointOnLine(auto& lineP1, auto& lineP2, auto& p, double leniance)
+{
+	if (lineP1 == p || lineP2 == p) { return true; }
+	MyVec3 dirP1ToP2 = MyVec3(lineP2.x - lineP1.x, lineP2.y - lineP1.y, 0);
+	MyVec3 normDirP1ToP2 = glm::normalize(dirP1ToP2);
+	MyVec3 dirP1Top = MyVec3(p.x - lineP1.x, p.y - lineP1.y, 0);
+	MyVec3 normDirP1ToP = glm::normalize(dirP1Top);
+	auto cross = glm::cross(normDirP1ToP2, normDirP1ToP);
+	if (abs(cross.z) > leniance) { return false; }
 	if (dirP1ToP2.x != 0)
 	{
 		auto rslt = (dirP1Top.x / dirP1ToP2.x);

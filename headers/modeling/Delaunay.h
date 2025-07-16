@@ -10,37 +10,17 @@
 #include "../core/Definitions.h"
 #include "TwoDMeshContainer.h"
 #include <list>
+#include <functional>
 
 class Delaunay
 {
 public:
-    using MshCont    = TwoDMeshContainer;
-public:
-	Mesh* Create2DUnconstrained     (std::string inPath);
-    Mesh* Create2DConstrained       (std::string inPath);
-    Mesh* Create2DConsWEdge         (std::string inPath);
-    Mesh* Create2DUnconstrainedNew  (std::string inPath);
-    Mesh* Create2DConsSmoothedWEdge (std::string inPath, float pointDist = 0.3, float sclForFillPts = 2.5, int jmpForFillPts = 1);
+    Mesh*         Create2DUnconstrainedNew          ( std::string          inPath);
+    Mesh*         Create2DConstrainedNew            ( std::string          inPath, 
+                                                      double               inEdgeScls, 
+                                                      double               inGridScale);
 private:
-    struct IntersectionData
-    {
-        enum TypeIntersection
-        {
-            point,
-            edge,
-            edgeEdgePrll,
-            noIntersection
-        };
-        std::array<size_t, 3> tri;
 
-        TypeIntersection type1;
-        std::pair<int64_t, int64_t> edge1;
-        glm::vec2 point1;
-
-        TypeIntersection type2;
-        std::pair<int64_t, int64_t> edge2;
-        glm::vec2 point2;
-    };
     struct IntersectionDataNew
     {
         enum class TypeIntersection
@@ -51,54 +31,29 @@ private:
             noIntersection
         };
         TypeIntersection      type;
-        MyVec2                point;
+        size_t                point;
         MshCont::EdgeNds      edge;
     };
-    struct SortedData
-    {
-        size_t location;
-        std::vector<std::array<size_t, 3>> tris;
-        std::vector<std::pair<size_t, size_t>> edges;
-    };
+    using MshCont       = TwoDMeshContainer;
+    using IntersectList = std::list<IntersectionDataNew>;
 private:
-    void AddExtraPoints(float inDist, float sclForFillPts, int jmpForFillPts);
-    void CreateSecondaryLinePoints(float inDist, const glm::vec2 inP1, const glm::vec2 inP2);
-    void CreateEdgeLinePoints(float inDist, const glm::vec2 inP1, const glm::vec2 inP2);
-    void DeleteOutsideTriangles();
-    bool IsTriInsideConstraints(const std::array<size_t, 3>& inTri);
-    void Create2DUnconstrained();
-
-
-    void Create2DUnconstrainedNew();
-    void CreateFirstTriNew();
-    void DeleteExtraPointTriNew();
-    Mesh* CreateModelNew();
-    void ForceConstraintsNew();
-    std::list<IntersectionDataNew> GetIntersectionsNew( size_t inBeginIdx, size_t inEndIdx);
-    void HandleIntersectionsNew(std::list<IntersectionDataNew> inData);
-    void AddExtraPointsSimpleNew(float inDist, float inFillDist, int jmpForFillPts);
-
-
-    void VerifyDelaunayNew();
-    void CompareMshContainerWithOld();
-
-    void ForceConstraints();
-    void PopulatePoints(std::string inPath);
-    void CreateFirstTri();
-    std::vector<std::array<size_t, 3>> GetTriContainingPoint(size_t inPointIdx);
-    void DeleteAndCreateTri(size_t inPtIdx, std::vector<std::array<size_t, 3>> inTriToDelete);
-    void DeleteExtraPointTri();
-    Mesh* CreateModel();
-    std::vector<IntersectionData> GetTriContainingEdge(glm::vec2 p1, glm::vec2 p2);
-    std::vector<SortedData>       GetSortedData(std::vector<IntersectionData> inData, glm::vec2 startingPoint);
-    void                          CutTriangles(std::vector<SortedData> inData);
-    IntersectionData IsLineIntersectingTri(glm::vec2 p1, glm::vec2 p2, const std::array<size_t, 3>& inTri);
-    size_t AddPoint(float x, float y);
+    void          Create2DUnconstrainedNew          ( );
+    void          CreateFirstTriNew                 ( );
+    void          DeleteExtraPointTriNew            ( );
+    Mesh*         CreateModelNew                    ( );
+    void          ForceConstraintsNew               ( );
+    IntersectList GetIntersectionsNew               ( size_t               inBeginIdx, 
+                                                      size_t               inEndIdx);
+    void          HandleIntersectionsNew            ( IntersectList        inData);
+    void          AddExtraPointsSimpleNew           ( double               inDist, 
+                                                      double               inFillDist);
+    void          AddGeneralNodesNew                ( double               inFillDist);
+    void          AddEdgeNodesNew                   ( double               inDist, 
+                                                      MyVec2               inPt1, 
+                                                      MyVec2               inPt2);
+    void          DeleteOutsideConsTriNew           ( );
+    void          VerifyDelaunayNew                 ( );
 private:
-	std::vector<glm::vec2> mPoints;
-    std::vector<size_t>    mEdges;
-	std::unordered_set<std::array<size_t, 3>, UnorderedArrayHash<size_t, 3>, UnorderedArrayEqual<size_t, 3>> mTris;
-    std::unordered_map<std::array<float, 2>, size_t, UnorderedArrayHash<float, 2>, OrderedArrayEqual<float, 2>> mPoint2Idx;
     TwoDMeshContainer      mMshContainer;
 
     float mMaxX, mMaxY, mMinX, mMinY;

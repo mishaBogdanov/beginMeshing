@@ -20,6 +20,7 @@ public:
     using Tri              = std::array<size_t, 3>;
     using TriPtrHash       = std::unordered_set<const Tri*>;
     using EdgeNds          = std::array<size_t, 2>;
+    using EdgeHash         = std::unordered_set<EdgeNds, OrderedArrayHash<size_t, 2>, OrderedArrayEqual<size_t, 2>>;
     using PointHash        = std::unordered_set<MyVec2, Vec2Hash, Vec2Equal>;
 public:
     void                  populateFromGlm      ( std::vector<glm::vec2>&  inPts,
@@ -47,15 +48,16 @@ public:
     const TriPtrHash&     getTriFromEdge       ( size_t                    inPtIdx1,
                                                  size_t                    inPtIdx2);
     const TriPtrHash&     getTriFromEdge       ( EdgeNds                   inPtIds);
-    size_t                getNumEdges          ( ) { return mEdges.size()/2; }
-    EdgeNds               getEdgeIdx           ( size_t                    inEdgeIdx) { return {mEdges[inEdgeIdx*2], mEdges[inEdgeIdx*2+1]}; }
-    bool                  doesEdgeExist        ( size_t                    inPtIdx1,
+    const EdgeHash&       getEdgesConstraint   ( ) {return mEdgesHash;}
+    bool                  doesTriEdgeExist     ( size_t                    inPtIdx1,
                                                  size_t                    inPtIdx2);
+    void                  addEdge              ( EdgeNds                   inEdge);
+    TriVec                getTrisNotAcrossEdge ( Tri                       inTri);
     
 
 private:
     PointVec                                                                                                                         mPoints;
-    std::vector<size_t>                                                                                                              mEdges;
+    EdgeHash                                                                                                                         mEdgesHash;
     std::unordered_map<size_t, TriPtrHash>                                                                                           mPointToTri;
     std::unordered_map<std::array<size_t, 2>, TriPtrHash, OrderedArrayHash<size_t, 2>, OrderedArrayEqual<size_t, 2>>                 mEdgeToTri;
     std::unordered_map<MyVec2, size_t, Vec2Hash, Vec2Equal>                                                                          mPointToIdx;

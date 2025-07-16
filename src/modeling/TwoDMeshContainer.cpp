@@ -28,7 +28,10 @@ TwoDMeshContainer::populateFromGlm        ( std::vector<glm::vec2>&         inPt
 	{
 		addPoint(pt.x, pt.y);
 	}
-	mEdges = inEdges;
+	for (size_t i = 0; i < inEdges.size(); i+=2)
+	{
+		mEdgesHash.insert({ inEdges[i], inEdges[i + 1] });
+	}
 }
 void
 TwoDMeshContainer::removeTriangle         ( std::array<size_t, 3>           inArray)  // NOTE: does not modify mTriToContainedPoint
@@ -108,11 +111,25 @@ TwoDMeshContainer::readFile               ( std::string                     inLo
 	}
 	if (word == "end_points")
 	{
+		bool isFirst = true;
+		EdgeNds edge;
 		while (true)
 		{
 			if (!(rdStream >> idx)) { break; };
-			mEdges.push_back(idx);
+			if (isFirst)
+			{
+				edge[0] = idx;
+				isFirst = false;
+			}
+			else
+			{
+				edge[1] = idx;
+				isFirst = true;
+				std::sort(edge.begin(), edge.end());
+				mEdgesHash.insert(edge);
+			}
 		}
+		if (!isFirst) { throw std::logic_error("odd number of edges found"); }
 	}
 	rdStream.close();
 }
@@ -213,7 +230,7 @@ TwoDMeshContainer::getNeighborTri         ( std::array<size_t, 3>           inAr
 	return std::move(outVal);
 }
 bool
-TwoDMeshContainer::doesEdgeExist          ( size_t                          inPtIdx1,
+TwoDMeshContainer::doesTriEdgeExist          ( size_t                          inPtIdx1,
                                             size_t                          inPtIdx2)
 {
 #if SAFE_MODE == 1
@@ -295,6 +312,56 @@ TwoDMeshContainer::getTriFromEdge         ( EdgeNds                   inPtIds)
 	return {};
 #endif
 }
+void
+TwoDMeshContainer::addEdge                ( EdgeNds                   inEdge)
+{
+#if SAFE_MODE == 1
+	if (inEdge[0] >= inEdge[1]) { throw std::logic_error("received reverse nodes in addEdge"); }
+#endif
+	mEdgesHash.insert(inEdge);
+}
+TwoDMeshContainer::TriVec
+TwoDMeshContainer::getTrisNotAcrossEdge   ( Tri                       inTri)
+{
+#if SAFE_MODE == 1
+	std::array<size_t, 3> sortedArr = inTri;
+	std::sort(sortedArr.begin(), sortedArr.end());
+	if (sortedArr != inTri) { throw std::logic_error("passed unsorted array"); }
+#endif
+	TriVec outVal;
+	if (!mEdgesHash.contains({ inTri[0], inTri[1] }))
+	{
+		for (auto& triPtr : mEdgeToTri[{inTri[0], inTri[1]}])
+		{
+			if (*triPtr != inTri)
+			{
+				outVal.push_back(*triPtr);
+			}
+		}
+	}
+	if (!mEdgesHash.contains({ inTri[1], inTri[2] }))
+	{
+		for (auto& triPtr : mEdgeToTri[{inTri[1], inTri[2]}])
+		{
+			if (*triPtr != inTri)
+			{
+				outVal.push_back(*triPtr);
+			}
+		}
+	}
+	if (!mEdgesHash.contains({ inTri[0], inTri[2] }))
+	{
+		for (auto& triPtr : mEdgeToTri[{inTri[0], inTri[2]}])
+		{
+			if (*triPtr != inTri)
+			{
+				outVal.push_back(*triPtr);
+			}
+		}
+	}
+	return outVal;
+}
+
 
 
 

@@ -1,12 +1,16 @@
-#include "../../headers/rendering/MainRenderer.h"
+﻿#include "../../headers/rendering/MainRenderer.h"
 #include <stdlib.h>
+#include "../../headers/GlobalVariables.h"
 MainRenderer::MainRenderer()
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	mWindow = glfwCreateWindow(800, 800, "YoutubeOpenGL", NULL, NULL);
+	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* videoMode = glfwGetVideoMode(monitor);
+	mWindow = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGH, "YoutubeOpenGL", NULL, NULL);
+	//mWindow = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGH, "YoutubeOpenGL", monitor, NULL);
 	if (mWindow == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -14,9 +18,9 @@ MainRenderer::MainRenderer()
 	}
 	glfwMakeContextCurrent(mWindow);
 	gladLoadGL();
-	glViewport(0, 0, 800, 800);
+	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGH);
 	glEnable(GL_DEPTH_TEST);
-	glLineWidth(3.0f);
+	glLineWidth(1.0f);
 
 	mShaders.push_back(ShaderClass("./shaders/default.vert", "./shaders/default.geom", "./shaders/default.frag"));
 	mShaders.push_back(ShaderClass("./shaders/default.vert", "./shaders/outline.geom", "./shaders/outline.frag"));

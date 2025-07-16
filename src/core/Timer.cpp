@@ -31,6 +31,7 @@ void Timer::stopTime(const std::string& filename)
 {
     if (!mRunning) return;
     mRunning = false;
+    if (filename == "") return;
 
     const std::string outName = uniqueName(filename);
     std::ofstream ofs(outName, std::ios::out);

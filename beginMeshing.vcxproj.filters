@@ -72,6 +72,9 @@
     <ClCompile Include="src\modeling\TwoDMeshContainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\CsvWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\OpenGL\EBO.h">
@@ -131,6 +134,9 @@
     <ClInclude Include="headers\core\Definitions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="headers\core\CsvWriter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\default.frag" />
@@ -151,12 +157,15 @@
     <None Include="models\test4.delouney" />
     <None Include="models\testFish.delouney" />
     <None Include="models\testFish2.delouney" />
-    <None Include="models\testCar.delouney" />
+    <None Include="models\testCar.delaunay" />
     <None Include="models\testButerflyGPT.delouney" />
     <None Include="models\testButerfly.delouney" />
     <None Include="models\testButerfly.delaunay" />
     <None Include="models\points2C.delaunay" />
     <None Include="models\testWithConcave.delaunay" />
     <None Include="models\testButerflyNew.delaunay" />
+    <None Include="models\testTwoPoint.delaunay" />
+    <None Include="models\buterflyDebug.delaunay" />
+    <None Include="timingData.csv" />
   </ItemGroup>
 </Project>
