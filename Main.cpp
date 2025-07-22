@@ -12,6 +12,7 @@
 #include "headers/testing/LineIntersectionTesting.h"
 #include "headers/modeling/TwoDMeshContainer.h"'
 #include <functional>'
+#include "headers/core/GlobalVariables.h"
 int main()
 {
 	//glm::vec2 p0 = { 0,0 }, p1 = { 1,1 }, p2 = { 0.5, 0.5 }, p3 = { 0,2 };
@@ -53,15 +54,15 @@ int main()
 	//auto j = IsPolygonConvex({ {0,0}, {1,0}, {1,1}, {0,1} }); // true
 	//auto h = IsPolygonConvex({ {0,0}, {0,1}, {1,1}, {0.2,0.20001}}); // false
 	//auto g = IsPolygonConvex({ {0,0}, {1,0}, {1,1} });
-	auto debugCubes = [&](std::vector<MyVec2> inVec)
+	debugFunc = [&](std::vector<MyVec2> inVec, double inScale)
 		{
 			for (auto& vec : inVec)
 			{
-				Mesh* testCube = new Mesh("./models/cube.object", 0.01, glm::vec3(vec.x, vec.y, 0));
+				Mesh* testCube = new Mesh("./models/cube.object", inScale, glm::vec3(vec.x, vec.y, 0));
 				renderer.AddMesh(testCube);
 			}
 		};
-	auto testMesh = del.Create2DConstrainedNew("./models/testCar.delaunay", 0.1, 0.4);
+	auto testMesh = del.Create2DConstrainedDebug("./models/testFish2.delaunay", 0.03, 0.06);
 
 
 

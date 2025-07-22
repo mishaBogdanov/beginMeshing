@@ -137,6 +137,9 @@
     <ClInclude Include="headers\core\CsvWriter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="headers\core\GlobalVariables.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\default.frag" />
@@ -156,7 +159,7 @@
     <None Include="models\test3.delouney" />
     <None Include="models\test4.delouney" />
     <None Include="models\testFish.delouney" />
-    <None Include="models\testFish2.delouney" />
+    <None Include="models\testFish2.delaunay" />
     <None Include="models\testCar.delaunay" />
     <None Include="models\testButerflyGPT.delouney" />
     <None Include="models\testButerfly.delouney" />

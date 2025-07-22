@@ -189,14 +189,16 @@ namespace glm
 
 std::pair<bool, glm::vec2> GetCenterTriangle          (const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& p3);
 std::pair<bool, MyVec2>    GetCenterTriangle          (const MyVec2& p1, const MyVec2& p2, const MyVec2& p3);
-bool                       IsPointInCircumference     (const auto& pt, const auto& p1, const auto& p2, const auto& p3);
+bool                       IsPointInCircumCircle      (const auto& pt, const auto& p1, const auto& p2, const auto& p3);
+bool                       IsPointInCircumCircle      (const auto& pt, const auto& p1, const auto& p2, const auto& p3, double leniance);
 bool                       IsPolygonConvex            (std::vector<MyVec2> inPoints);
 LineIntersectionData       GetLineLineIntersection    (glm::vec2 line1p1, glm::vec2 line1p2, glm::vec2 line2p1, glm::vec2 line2p2);
 bool                       DoLinesIntersect           (const auto& line1p1, const auto& line1p2, const auto& line2p1, const auto& line2p2);
 bool                       DoLinesIntersect           (const auto& line1p1, const auto& line1p2, const auto& line2p1, const auto& line2p2, double leniance);
 bool                       IsPointOnLine              (auto& lineP1, auto& lineP2, auto& p);
 bool                       IsPointOnLine              (auto& lineP1, auto& lineP2, auto& p, double leniance);
-bool                       IsPointInTriangle          (auto& pt, auto& triP1, auto& triP2, auto& triP3);
+bool                       IsPointInTriangle          (const auto& pt, const auto& triP1, const auto& triP2, const auto& triP3);
+bool                       IsPointInTriangle          (const auto& pt, const auto& triP1, const auto& triP2, const auto& triP3, double leniance);
 double                     CrossIn2D                  (const MyVec2& in1, const MyVec2& in2);
 double                     CrossSign                  (auto& p1, auto& p2, auto& p3);
 std::vector<size_t>        GetQuadFromTri             (const std::array<size_t, 3>&inTri1, const std::array<size_t, 3>& inTri2);
@@ -275,7 +277,7 @@ IsPointOnLine(auto& lineP1, auto& lineP2, auto& p, double leniance)
 	return 0;
 }
 bool
-IsPointInTriangle(auto& pt, auto& triP1, auto& triP2, auto& triP3)
+IsPointInTriangle(const auto& pt, const auto& triP1, const auto& triP2, const auto& triP3)
 {
 	double d1, d2, d3;
 	bool has_neg, has_pos;
@@ -289,20 +291,45 @@ IsPointInTriangle(auto& pt, auto& triP1, auto& triP2, auto& triP3)
 
 	return !(has_neg && has_pos);
 }
+bool
+IsPointInTriangle(const auto& pt, const auto& triP1, const auto& triP2, const auto& triP3, double leniance)
+{
+	double d1, d2, d3;
+	bool has_neg, has_pos;
+
+	d1 = CrossSign(pt, triP1, triP2);
+	d2 = CrossSign(pt, triP2, triP3);
+	d3 = CrossSign(pt, triP3, triP1);
+
+	has_neg = (d1 < 0 && abs(d1) > leniance) || (d2 < 0 && abs(d2) > leniance) || (d3 < 0 && abs(d3) > leniance);
+	has_pos = (d1 > 0 && abs(d1) > leniance) || (d2 > 0 && abs(d2) > leniance) || (d3 > 0 && abs(d3) > leniance);
+
+	return !(has_neg && has_pos);
+}
 double
 CrossSign(auto& p1, auto& p2, auto& p3)
 {
 	return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
 }
-bool      IsPointInCircumference(const auto& pt, const auto& p1, const auto& p2, const auto& p3)
+bool      IsPointInCircumCircle(const auto& pt, const auto& p1, const auto& p2, const auto& p3)
 {
 	auto center = GetCenterTriangle(p1, p2, p3);
 	if (!center.first) { return false; }
 	auto circ = p1 - center.second;
 	auto dist = pt - center.second;
-	float radSqr = glm::dot(circ, circ);
-	float distSqr = glm::dot(dist, dist);
+	double radSqr = glm::dot(circ, circ);
+	double distSqr = glm::dot(dist, dist);
 	return radSqr > distSqr;
+}
+bool      IsPointInCircumCircle(const auto& pt, const auto& p1, const auto& p2, const auto& p3, double leniance)
+{
+	auto center = GetCenterTriangle(p1, p2, p3);
+	if (!center.first) { return false; }
+	auto circ = p1 - center.second;
+	auto dist = pt - center.second;
+	double radSqr = glm::dot(circ, circ);
+	double distSqr = glm::dot(dist, dist);
+	return radSqr > distSqr * leniance;
 }
 
 

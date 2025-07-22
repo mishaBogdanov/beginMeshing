@@ -2,6 +2,7 @@
 #include "../../headers/modeling/MyMath.h"
 #include "../../headers/core/Timer.h"]
 #include "../../headers/core/CsvWriter.h"
+#include "../../headers/core/GlobalVariables.h"
 Mesh*
 Delaunay::Create2DUnconstrainedNew               ( std::string            inPath)
 {
@@ -25,7 +26,7 @@ Delaunay::Create2DConstrainedNew                 ( std::string            inPath
 	ForceConstraintsNew();
 	Timer::time();
 	auto nTriBeforeDelete = mMshContainer.getTriangles().size();
-	DeleteOutsideConsTriNew();
+	//DeleteOutsideConsTriNew();
 	Timer::time();
 	Timer::stopTime();
 	auto intervals = Timer::getIntervals();
@@ -33,7 +34,45 @@ Delaunay::Create2DConstrainedNew                 ( std::string            inPath
 	intervals.push_back(nTriBeforeDelete);
 	intervals.push_back(mMshContainer.getTriangles().size());
 	intervals.push_back(mMshContainer.getEdgesConstraint().size());
-	CsvWriter::SetData(intervals, "timingData.csv");
+	//CsvWriter::SetData(intervals, "timingData.csv");
+	return CreateModelNew();
+}
+Mesh*         
+Delaunay::Create2DConstrainedDebug               ( std::string            inPath, 
+                                                   double                 inEdgeScls, 
+                                                   double                 inGridScale)
+{
+	mMshContainer.readFile(inPath);
+	Timer::startTime();
+	auto points = mMshContainer.getPoints();
+	AddExtraPointsSimpleNew(inEdgeScls, inGridScale);
+	Timer::time();
+	size_t nPoints = mMshContainer.getPoints().size();
+	Create2DUnconstrainedNew();
+	Timer::time();
+	ForceConstraintsNew();
+	Timer::time();
+	auto nTriBeforeDelete = mMshContainer.getTriangles().size();
+	std::vector<MyVec2> outVec;
+	
+	DeleteOutsideConsTriNew();
+	Timer::time();
+	//Timer::stopTime();
+	//auto intervals = Timer::getIntervals();
+	//intervals.push_back(mMshContainer.getPoints().size());
+	//intervals.push_back(nTriBeforeDelete);
+	//intervals.push_back(mMshContainer.getTriangles().size());
+	//intervals.push_back(mMshContainer.getEdgesConstraint().size());
+	//CsvWriter::SetData(intervals, "timingData.csv");
+	for (size_t i = 0; i < mMshContainer.getNumPoints(); i++)
+	{
+		auto& tri = mMshContainer.getTriFromPts(i);
+		if (tri.size() == 0)
+		{
+			//outVec.push_back(mMshContainer.getPoints()[i]);
+		}
+	}
+	//debugFunc(outVec);
 	return CreateModelNew();
 }
 void
@@ -58,10 +97,10 @@ Delaunay::Create2DUnconstrainedNew               ( )
 		{
 			auto curTri = triToVisit[triToVisit.size() - 1];
 			triToVisit.pop_back();
-			if (IsPointInCircumference(mMshContainer.getPoints()[ptIdx],
+			if (IsPointInCircumCircle(mMshContainer.getPoints()[ptIdx],
 				mMshContainer.getPoints()[curTri[0]],
 				mMshContainer.getPoints()[curTri[1]],
-				mMshContainer.getPoints()[curTri[2]]))
+				mMshContainer.getPoints()[curTri[2]], 1.0))
 			{
 				auto  neighbors = mMshContainer.getNeighborTri(curTri);
 				for (auto& tr : neighbors) 
@@ -87,6 +126,7 @@ Delaunay::Create2DUnconstrainedNew               ( )
 			}
 		}
 		mMshContainer.removeAndReplaceTri(triToDelete, triToCreate, ptIdx);
+		
 	}
 	DeleteExtraPointTriNew();
 }
@@ -130,7 +170,7 @@ Delaunay::VerifyDelaunayNew                      ( )
 		for (size_t ndIdx = 0; ndIdx < mMshContainer.getPoints().size(); ndIdx++)
 		{
 			if (mMshContainer.getTriFromPts(ndIdx).size() == 0) { continue; }
-			if (IsPointInCircumference(mMshContainer.getPoints()[ndIdx], mMshContainer.getPoints()[tri[0]], mMshContainer.getPoints()[tri[1]], mMshContainer.getPoints()[tri[2]]))
+			if (IsPointInCircumCircle(mMshContainer.getPoints()[ndIdx], mMshContainer.getPoints()[tri[0]], mMshContainer.getPoints()[tri[1]], mMshContainer.getPoints()[tri[2]]))
 			{
 				std::cout << "error detected\n";
 			}
@@ -157,7 +197,7 @@ Delaunay::CreateModelNew                         ( )
 void
 Delaunay::ForceConstraintsNew                    ( )
 {
-	auto& edges = mMshContainer.getEdgesConstraint();
+	auto edges = mMshContainer.getEdgesConstraint();
 	for (auto edge : edges)
 	{
 		if(edge[1] < edge[0]) 
@@ -369,13 +409,6 @@ Delaunay::AddEdgeNodesNew                        ( double                 inDist
 			auto newPoint2 = curPos - (normalizedDirection * 0.5) - pInverse * 2.5;
 			mMshContainer.addPoint(newPoint1.x, newPoint1.y);
 			mMshContainer.addPoint(newPoint2.x, newPoint2.y);
-			if (i % 9 == 0)
-			{
-				auto newPoint1 = curPos + pInverse * 6.0;
-				auto newPoint2 = curPos - (normalizedDirection * 0.5) - pInverse * 6.0;
-				mMshContainer.addPoint(newPoint1.x, newPoint1.y);
-				mMshContainer.addPoint(newPoint2.x, newPoint2.y);
-			}
 		}
 		auto newPoint1 = curPos + pInverse;
 		auto newPoint2 = curPos - (normalizedDirection * 0.33) - pInverse;

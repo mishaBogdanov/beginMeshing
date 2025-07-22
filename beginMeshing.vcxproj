@@ -179,6 +179,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\core\CsvWriter.h" />
+    <ClInclude Include="headers\core\GlobalVariables.h" />
     <ClInclude Include="headers\modeling\Delaunay.h" />
     <ClInclude Include="headers\modeling\Edge.h" />
     <ClInclude Include="headers\modeling\Body.h" />
@@ -216,7 +217,7 @@
     <None Include="models\testButerflyNew.delaunay" />
     <None Include="models\testCar.delaunay" />
     <None Include="models\testFish.delouney" />
-    <None Include="models\testFish2.delouney" />
+    <None Include="models\testFish2.delaunay" />
     <None Include="models\testTwoPoint.delaunay" />
     <None Include="models\testWithConcave.delaunay" />
     <None Include="shaders\default.frag" />

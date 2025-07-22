@@ -19,8 +19,11 @@ public:
     Mesh*         Create2DConstrainedNew            ( std::string          inPath, 
                                                       double               inEdgeScls, 
                                                       double               inGridScale);
+    Mesh*         Create2DConstrainedDebug          ( std::string          inPath, 
+                                                      double               inEdgeScls, 
+                                                      double               inGridScale);
 private:
-
+    using MshCont = TwoDMeshContainer;
     struct IntersectionDataNew
     {
         enum class TypeIntersection
@@ -34,7 +37,6 @@ private:
         size_t                point;
         MshCont::EdgeNds      edge;
     };
-    using MshCont       = TwoDMeshContainer;
     using IntersectList = std::list<IntersectionDataNew>;
 private:
     void          Create2DUnconstrainedNew          ( );

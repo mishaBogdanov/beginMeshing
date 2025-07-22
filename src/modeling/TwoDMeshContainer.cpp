@@ -1,6 +1,7 @@
 #include "../../headers/modeling/TwoDMeshContainer.h"
 #include <iostream>
 #include <fstream>
+#include "../../headers/core/GlobalVariables.h"
 
 void
 TwoDMeshContainer::addTriangle            ( std::array<size_t, 3>           inArray)
@@ -9,6 +10,17 @@ TwoDMeshContainer::addTriangle            ( std::array<size_t, 3>           inAr
 	std::array<size_t, 3> sortedArr = inArray;
 	std::sort(sortedArr.begin(), sortedArr.end());
 	if (sortedArr != inArray) { throw std::logic_error("passed unsorted array"); }
+	MyVec2 v1 = glm::normalize(mPoints[inArray[0]] - mPoints[inArray[1]]);
+	MyVec2 v2 = glm::normalize(mPoints[inArray[2]] - mPoints[inArray[1]]);
+	double dot = glm::dot(v1, v2);
+	if (dot == 1 || dot == -1) 
+	{ 
+		throw std::logic_error("new tri is very thin"); 
+	}
+	if (dot > 0.9999999 || dot < -0.9999999)
+	{
+		std::cout << "NOTICE! very thin tri created!\n";
+	}
 #endif
 	auto itr = mTriangles.emplace(inArray);
 	mPointToTri[inArray[0]].insert(&*itr.first);
@@ -257,19 +269,29 @@ TwoDMeshContainer::removeAndReplaceTri    ( TriVec                          toRe
 		if (sortedArr != tri) { throw std::logic_error("passed unsorted array"); }
 	}
 #endif
+	bool foundRightTri = false;
 	for (auto& triRmv : toRemove)
 	{
 		for (auto& ptIdx : mTriToContainedPoint[triRmv])
 		{
-			for (auto& tri : toInsert)
+			for (size_t i = 0; i < toInsert.size(); i++)
 			{
+				auto& tri = toInsert[i];
 				if (ptIdx == toNotInclude) { continue; }
-				if (IsPointInTriangle(mPoints[ptIdx], mPoints[tri[0]], mPoints[tri[1]], mPoints[tri[2]]))
+				if (IsPointInTriangle(mPoints[ptIdx], mPoints[tri[0]], mPoints[tri[1]], mPoints[tri[2]], 1e-13))
 				{
 					mTriToContainedPoint[tri].insert(ptIdx);
 					mTrianglesWithPoints.insert(tri);
-					continue;
+					break;
 				}
+#if SAFE_MODE == 1
+				if (i == toInsert.size() - 1)
+				{
+					errorPoint = mPoints[ptIdx];
+					//throw std::logic_error("point doesn't belong to any new tri");
+					std::cout<<"WARNING! GOT TO END WITH NO TRI TO ASSIGN POINT TO"
+				}
+#endif
 			}
 		}
 		mTriToContainedPoint.erase(triRmv);

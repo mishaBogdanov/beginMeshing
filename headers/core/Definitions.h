@@ -2,6 +2,7 @@
 #include<array>
 #include <algorithm>
 #include "../modeling/MyMath.h"
+#include <functional>
 #define USE_EDGES 1
 #define SAFE_MODE 0
 
