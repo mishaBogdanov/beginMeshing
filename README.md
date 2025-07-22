@@ -43,6 +43,17 @@ Before I used to shoot a ray straight up from each triangle, and see if it inter
 
 <img width="700" height="620" alt="Time_to_delete_outside_tri_vs_Total_Triangles" src="https://github.com/user-attachments/assets/d7d832d9-1357-4a29-bf1e-7814d68ce472" />
 
+## new gallery:
+
+<img width="793" height="471" alt="image" src="https://github.com/user-attachments/assets/5bfe172c-c056-48fe-89e9-3d79e345fa19" />
+
+<img width="790" height="747" alt="image" src="https://github.com/user-attachments/assets/277ebbeb-fad7-46fb-9948-25e9e0c3d009" />
+
+<img width="793" height="191" alt="image" src="https://github.com/user-attachments/assets/48734a42-ddba-4154-aae6-534cbc82c3ab" />
+
+
+
+
 
 
 ## heart of the application:
@@ -53,6 +64,7 @@ Before I used to shoot a ray straight up from each triangle, and see if it inter
 
 - simply reads the data from the file and populates the necessary data structures.
 
+## old code:
 ## Add Extra Points:
 
 - This function exists to add additional points to the model which can then be connected together to triangulate the mesh.
