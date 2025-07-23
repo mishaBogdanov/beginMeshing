@@ -15,6 +15,8 @@ TwoDMeshContainer::addTriangle            ( std::array<size_t, 3>           inAr
 	double dot = glm::dot(v1, v2);
 	if (dot == 1 || dot == -1) 
 	{ 
+		debugFunc({ mPoints[inArray[0]], mPoints[inArray[1]], mPoints[inArray[2]] }, 0.005);
+
 		throw std::logic_error("new tri is very thin"); 
 	}
 	if (dot > 0.9999999 || dot < -0.9999999)
@@ -23,13 +25,13 @@ TwoDMeshContainer::addTriangle            ( std::array<size_t, 3>           inAr
 	}
 #endif
 	auto itr = mTriangles.emplace(inArray);
-	mPointToTri[inArray[0]].insert(&*itr.first);
-	mPointToTri[inArray[1]].insert(&*itr.first);
-	mPointToTri[inArray[2]].insert(&*itr.first);
+	mPointToTri[inArray[0]].insert(inArray);
+	mPointToTri[inArray[1]].insert(inArray);
+	mPointToTri[inArray[2]].insert(inArray);
 #if USE_EDGES == 1
-	mEdgeToTri[{inArray[0], inArray[1]}].insert(&*itr.first);
-	mEdgeToTri[{inArray[1], inArray[2]}].insert(&*itr.first);
-	mEdgeToTri[{inArray[0], inArray[2]}].insert(&*itr.first);
+	mEdgeToTri[{inArray[0], inArray[1]}].insert(inArray);
+	mEdgeToTri[{inArray[1], inArray[2]}].insert(inArray);
+	mEdgeToTri[{inArray[0], inArray[2]}].insert(inArray);
 #endif
 }
 void
@@ -61,30 +63,30 @@ TwoDMeshContainer::removeTriangle         ( std::array<size_t, 3>           inAr
 #endif
 		return;
 	}
-	mPointToTri[inArray[0]].erase(&*itr);
-	mPointToTri[inArray[1]].erase(&*itr);
-	mPointToTri[inArray[2]].erase(&*itr);
+	mPointToTri[inArray[0]].erase(inArray);
+	mPointToTri[inArray[1]].erase(inArray);
+	mPointToTri[inArray[2]].erase(inArray);
 
 #if USE_EDGES == 1
 	auto edgeItr = mEdgeToTri.find({ inArray[0], inArray[1] });
 #if SAFE_MODE == 1
 	if (edgeItr == mEdgeToTri.end()) { throw std::logic_error("somehow deleting tri with unregistered edges"); }
 #endif
-	edgeItr->second.erase(&*itr);
+	edgeItr->second.erase(inArray);
 	if (edgeItr->second.empty()) { mEdgeToTri.erase(edgeItr); }
 
 	edgeItr = mEdgeToTri.find({ inArray[1], inArray[2] });
 #if SAFE_MODE == 1
 	if (edgeItr == mEdgeToTri.end()) { throw std::logic_error("somehow deleting tri with unregistered edges"); }
 #endif
-	edgeItr->second.erase(&*itr);
+	edgeItr->second.erase(inArray);
 	if (edgeItr->second.empty()) { mEdgeToTri.erase(edgeItr); }
 
 	edgeItr = mEdgeToTri.find({ inArray[0], inArray[2] });
 #if SAFE_MODE == 1
 	if (edgeItr == mEdgeToTri.end()) { throw std::logic_error("somehow deleting tri with unregistered edges"); }
 #endif
-	edgeItr->second.erase(&*itr);
+	edgeItr->second.erase(inArray);
 	if (edgeItr->second.empty()) { mEdgeToTri.erase(edgeItr); }
 
 #endif
@@ -222,6 +224,7 @@ TwoDMeshContainer::initializeDelaunay     ( std::array<size_t, 3>           inAr
 std::vector<std::array<size_t, 3>>
 TwoDMeshContainer::getNeighborTri         ( std::array<size_t, 3>           inArray)
 {
+#if 0
 #if SAFE_MODE == 1
 	std::array<size_t, 3> sortedArr = inArray;
 	std::sort(sortedArr.begin(), sortedArr.end());
@@ -234,12 +237,41 @@ TwoDMeshContainer::getNeighborTri         ( std::array<size_t, 3>           inAr
 		auto& foundTris = mPointToTri[inArray[i]];
 		for (auto& triPtr : foundTris)
 		{
-			triCollected.insert(*triPtr);
+			triCollected.insert(triPtr);
 		}
 	}
 	triCollected.erase(inArray);
 	for (auto& tri : triCollected) { outVal.push_back(tri); }
 	return std::move(outVal);
+#else
+	std::vector<std::array<size_t, 3>> outVal;
+	auto& triEdge1 = mEdgeToTri[{inArray[0], inArray[1]}];
+	for (auto& tri : triEdge1)
+	{
+		if (tri != inArray)
+		{
+			outVal.push_back(tri);
+		}
+	}
+	auto& triEdge2 = mEdgeToTri[{inArray[0], inArray[2]}];
+	for (auto& tri : triEdge2)
+	{
+		if (tri != inArray)
+		{
+			outVal.push_back(tri);
+		}
+	}
+	auto& triEdge3 = mEdgeToTri[{inArray[1], inArray[2]}];
+	for (auto& tri : triEdge3)
+	{
+		if (tri != inArray)
+		{
+			outVal.push_back(tri);
+		}
+	}
+	return outVal;
+#endif
+
 }
 bool
 TwoDMeshContainer::doesTriEdgeExist          ( size_t                          inPtIdx1,
@@ -289,7 +321,7 @@ TwoDMeshContainer::removeAndReplaceTri    ( TriVec                          toRe
 				{
 					errorPoint = mPoints[ptIdx];
 					//throw std::logic_error("point doesn't belong to any new tri");
-					std::cout<<"WARNING! GOT TO END WITH NO TRI TO ASSIGN POINT TO"
+					std::cout << "WARNING! GOT TO END WITH NO TRI TO ASSIGN POINT TO\n";
 				}
 #endif
 			}
@@ -307,7 +339,7 @@ TwoDMeshContainer::removeLastPoint        ( )
 	mPointToTri.erase(mPoints.size() - 1);
 	mPoints.pop_back();
 }
-const TwoDMeshContainer::TriPtrHash& 
+const TwoDMeshContainer::TriHash& 
 TwoDMeshContainer::getTriFromEdge         ( size_t                    inPtIdx1,
                                             size_t                    inPtIdx2)
 {
@@ -321,7 +353,7 @@ TwoDMeshContainer::getTriFromEdge         ( size_t                    inPtIdx1,
 	return {};
 #endif
 }
-const TwoDMeshContainer::TriPtrHash& 
+const TwoDMeshContainer::TriHash& 
 TwoDMeshContainer::getTriFromEdge         ( EdgeNds                   inPtIds)
 {
 #if SAFE_MODE == 1
@@ -355,9 +387,9 @@ TwoDMeshContainer::getTrisNotAcrossEdge   ( Tri                       inTri)
 	{
 		for (auto& triPtr : mEdgeToTri[{inTri[0], inTri[1]}])
 		{
-			if (*triPtr != inTri)
+			if (triPtr != inTri)
 			{
-				outVal.push_back(*triPtr);
+				outVal.push_back(triPtr);
 			}
 		}
 	}
@@ -365,9 +397,9 @@ TwoDMeshContainer::getTrisNotAcrossEdge   ( Tri                       inTri)
 	{
 		for (auto& triPtr : mEdgeToTri[{inTri[1], inTri[2]}])
 		{
-			if (*triPtr != inTri)
+			if (triPtr != inTri)
 			{
-				outVal.push_back(*triPtr);
+				outVal.push_back(triPtr);
 			}
 		}
 	}
@@ -375,9 +407,9 @@ TwoDMeshContainer::getTrisNotAcrossEdge   ( Tri                       inTri)
 	{
 		for (auto& triPtr : mEdgeToTri[{inTri[0], inTri[2]}])
 		{
-			if (*triPtr != inTri)
+			if (triPtr != inTri)
 			{
-				outVal.push_back(*triPtr);
+				outVal.push_back(triPtr);
 			}
 		}
 	}

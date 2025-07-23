@@ -19,21 +19,21 @@ Delaunay::Create2DConstrainedNew                 ( std::string            inPath
 	Timer::startTime();
 	auto points = mMshContainer.getPoints();
 	AddExtraPointsSimpleNew(inEdgeScls, inGridScale);
-	Timer::time();
+	//Timer::time();
 	size_t nPoints = mMshContainer.getPoints().size();
 	Create2DUnconstrainedNew();
-	Timer::time();
+	//Timer::time();
 	ForceConstraintsNew();
-	Timer::time();
-	auto nTriBeforeDelete = mMshContainer.getTriangles().size();
-	//DeleteOutsideConsTriNew();
-	Timer::time();
-	Timer::stopTime();
-	auto intervals = Timer::getIntervals();
-	intervals.push_back(mMshContainer.getPoints().size());
-	intervals.push_back(nTriBeforeDelete);
-	intervals.push_back(mMshContainer.getTriangles().size());
-	intervals.push_back(mMshContainer.getEdgesConstraint().size());
+	//Timer::time();
+	//auto nTriBeforeDelete = mMshContainer.getTriangles().size();
+	DeleteOutsideConsTriNew();
+	//Timer::time();
+	//Timer::stopTime();
+	//auto intervals = Timer::getIntervals();
+	//intervals.push_back(mMshContainer.getPoints().size());
+	//intervals.push_back(nTriBeforeDelete);
+	//intervals.push_back(mMshContainer.getTriangles().size());
+	//intervals.push_back(mMshContainer.getEdgesConstraint().size());
 	//CsvWriter::SetData(intervals, "timingData.csv");
 	return CreateModelNew();
 }
@@ -91,8 +91,14 @@ Delaunay::Create2DUnconstrainedNew               ( )
 
 		auto& tri = *mMshContainer.getRemainingTri().begin();
 		auto  ptIdx = *mMshContainer.getPointsInTri(tri).begin();
+		auto  neighbors = mMshContainer.getNeighborTri(tri);
 		triToVisit.push_back(tri);
 		triVisited.insert(tri);
+		for (auto& neighborTri : neighbors)
+		{
+			triToVisit.push_back(neighborTri);
+			triVisited.insert(neighborTri);
+		}
 		while (!triToVisit.empty())
 		{
 			auto curTri = triToVisit[triToVisit.size() - 1];
@@ -227,7 +233,7 @@ Delaunay::GetIntersectionsNew                    ( size_t				  inBeginIdx,
 	while (true)
 	{
 		bool cont = false;
-		MshCont::TriPtrHash triOptions;
+		MshCont::TriHash triOptions;
 		if (isLastPt)
 		{
 			triOptions = mMshContainer.getTriFromPts(prevPtId);
@@ -239,26 +245,26 @@ Delaunay::GetIntersectionsNew                    ( size_t				  inBeginIdx,
 
 		for (auto& triPtr : triOptions)
 		{
-			if (triPtr->at(0) == inEndIdx || triPtr->at(1) == inEndIdx || triPtr->at(2) == inEndIdx) 
+			if (triPtr.at(0) == inEndIdx || triPtr.at(1) == inEndIdx || triPtr.at(2) == inEndIdx) 
 			{ 
 				outVal.push_back({ IntersectionDataNew::TypeIntersection::point, inEndIdx, {} });
 				return outVal; 
 			}
 			for (int i = 0; i < 3; i++)
 			{
-				if (!visitedPoints.contains(mMshContainer.getPoints()[triPtr->at(i)]) && IsPointOnLine(mMshContainer.getPoints()[prevPtId],
+				if (!visitedPoints.contains(mMshContainer.getPoints()[triPtr.at(i)]) && IsPointOnLine(mMshContainer.getPoints()[prevPtId],
 															                                           mMshContainer.getPoints()[inEndIdx],
-															                                           mMshContainer.getPoints()[triPtr->at(i)], 0.0000001))
+															                                           mMshContainer.getPoints()[triPtr.at(i)], 0.0000001))
 				{
-					visitedPoints.insert(mMshContainer.getPoints()[triPtr->at(i)]);
+					visitedPoints.insert(mMshContainer.getPoints()[triPtr.at(i)]);
 					cont = true;
 					isLastPt = true;
-					prevPtId = triPtr->at(i);
-					outVal.push_back({ IntersectionDataNew::TypeIntersection::point, triPtr->at(i), {} });
+					prevPtId = triPtr.at(i);
+					outVal.push_back({ IntersectionDataNew::TypeIntersection::point, triPtr.at(i), {} });
 					continue;
 				}
-				size_t idx1 = triPtr->at(i);
-				size_t idx2 = triPtr->at((i+1)%3);
+				size_t idx1 = triPtr.at(i);
+				size_t idx2 = triPtr.at((i+1)%3);
 				if (idx2 < idx1) { auto temp = idx2; idx2 = idx1; idx1 = temp; }
 				if (!visitedEdge.contains({ idx1, idx2 }) && DoLinesIntersect(mMshContainer.getPoints()[prevPtId],
 															                  mMshContainer.getPoints()[inEndIdx],
@@ -308,9 +314,9 @@ Delaunay::HandleIntersectionsNew                 ( IntersectList          inData
 			if (tris.size() != 2) { throw std::logic_error("edge has dif num of tri than 2"); }
 #endif
 			auto itr = tris.begin();
-			auto& tri1 = **itr;
+			auto& tri1 = *itr;
 			itr++;
-			auto& tri2 = **itr;
+			auto& tri2 = *itr;
 			auto quad = GetQuadFromTri(tri1, tri2);
 			if (IsPolygonConvex({ mMshContainer.getPoints()[quad[0]],
 								  mMshContainer.getPoints()[quad[1]],
@@ -403,13 +409,13 @@ Delaunay::AddEdgeNodesNew                        ( double                 inDist
 	{
 		i++;
 		if (i > 6000) { std::cout << "a lot of points added"; }
-		if (i % 3 == 0)
-		{
-			auto newPoint1 = curPos + pInverse * 2.5;
-			auto newPoint2 = curPos - (normalizedDirection * 0.5) - pInverse * 2.5;
-			mMshContainer.addPoint(newPoint1.x, newPoint1.y);
-			mMshContainer.addPoint(newPoint2.x, newPoint2.y);
-		}
+		//if (i % 3 == 0)
+		//{
+		//	auto newPoint1 = curPos + pInverse * 2.5;
+		//	auto newPoint2 = curPos - (normalizedDirection * 0.5) - pInverse * 2.5;
+		//	mMshContainer.addPoint(newPoint1.x, newPoint1.y);
+		//	mMshContainer.addPoint(newPoint2.x, newPoint2.y);
+		//}
 		auto newPoint1 = curPos + pInverse;
 		auto newPoint2 = curPos - (normalizedDirection * 0.33) - pInverse;
 		auto newPoint3 = curPos - (normalizedDirection * 0.66);

@@ -62,7 +62,7 @@ int main()
 				renderer.AddMesh(testCube);
 			}
 		};
-	auto testMesh = del.Create2DConstrainedDebug("./models/testFish2.delaunay", 0.03, 0.06);
+	auto testMesh = del.Create2DConstrainedNew("./models/testButerflyNew.delaunay", 0.005, 0.01);
 
 
 
